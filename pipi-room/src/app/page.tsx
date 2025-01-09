@@ -1,11 +1,5 @@
-import { css } from '../../styled-system/css';
-import { Button } from '@/components/ui/button' 
-
-export default function Home() {
+export default function Page() {
   return (
-    <div className={css({ fontSize: "2xl", fontWeight: 'bold' })}>
-      <p>Hello 🐼!</p>
-      <Button variant="destructive">Button</Button>
-    </div>
+    <div>sss</div>
   )
 }

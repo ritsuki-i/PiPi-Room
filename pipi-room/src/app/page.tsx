@@ -1,5 +1,5 @@
 export default function Page() {
   return (
-    <div>ログインしてください多分</div>
+    <div>ログインしてください。多分できない</div>
   )
 }

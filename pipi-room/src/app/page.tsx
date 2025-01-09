@@ -1,5 +1,5 @@
 export default function Page() {
   return (
-    <div>slooooss</div>
+    <div>ログインしてください</div>
   )
 }

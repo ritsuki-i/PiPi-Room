@@ -1,24 +1,24 @@
 CREATE TABLE "article_labels" (
-	"article_id" varchar(255),
-	"label_id" varchar(255)
+	"article_id" bigint NOT NULL,
+	"label_id" bigint NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE "articles" (
-	"id" varchar(255) PRIMARY KEY NOT NULL,
+	"id" bigserial PRIMARY KEY NOT NULL,
 	"title" varchar(255) NOT NULL,
 	"date" date NOT NULL,
 	"content" text NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE "labels" (
-	"id" varchar(255) PRIMARY KEY NOT NULL,
+	"id" bigserial PRIMARY KEY NOT NULL,
 	"name" varchar(255) NOT NULL,
 	CONSTRAINT "labels_name_unique" UNIQUE("name")
 );
 --> statement-breakpoint
 CREATE TABLE "user_articles" (
 	"user_id" varchar(255),
-	"article_id" varchar(255)
+	"article_id" bigint NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE "user_learning_records" (
@@ -29,7 +29,7 @@ CREATE TABLE "user_learning_records" (
 --> statement-breakpoint
 CREATE TABLE "user_works" (
 	"user_id" varchar(255),
-	"work_id" varchar(255)
+	"work_id" bigint NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE "users" (
@@ -46,12 +46,12 @@ CREATE TABLE "users" (
 );
 --> statement-breakpoint
 CREATE TABLE "work_labels" (
-	"work_id" varchar(255),
-	"label_id" varchar(255)
+	"work_id" bigint NOT NULL,
+	"label_id" bigint NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE "works" (
-	"id" varchar(255) PRIMARY KEY NOT NULL,
+	"id" bigserial PRIMARY KEY NOT NULL,
 	"name" varchar(255) NOT NULL,
 	"date" date NOT NULL,
 	"url" text,

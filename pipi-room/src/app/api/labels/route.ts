@@ -24,3 +24,13 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json(insertedLabel);
 }
+
+export async function GET() {
+    try {
+        const allLabels = await db.select().from(labels);
+        return NextResponse.json(allLabels);
+    } catch (error) {
+        console.error("Error fetching labels:", error);
+        return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    }
+}

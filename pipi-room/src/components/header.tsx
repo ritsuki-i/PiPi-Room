@@ -41,11 +41,6 @@ export default function Header() {
                                 Sign In
                             </Button>
                         </SignInButton>
-                        <SignUpButton fallbackRedirectUrl={'/user/createAccount'} mode="modal">
-                            <Button variant="default" size="sm">
-                                Sign Up
-                            </Button>
-                        </SignUpButton>
                     </SignedOut>
                     <SignedIn>
                         <SignOutButton>

@@ -30,7 +30,7 @@ export default function ProfilePage() {
 
     const fetchProfile = async () => {
       try {
-        const res = await fetch("/api/profile")
+        const res = await fetch("/api/user/profile")
         if (!res.ok) {
           console.error("プロフィール取得に失敗しました")
           return
@@ -81,7 +81,7 @@ export default function ProfilePage() {
     }
 
     try {
-      const res = await fetch("/api/profile", {
+      const res = await fetch("/api/user/profile", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(profile),

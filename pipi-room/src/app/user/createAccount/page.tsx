@@ -1,140 +1,202 @@
-"use client";
+"use client"
 
-import { useUser } from "@clerk/nextjs";
-import { useState } from "react";
+import type React from "react"
+
+import { useUser } from "@clerk/nextjs"
+import { useState, useEffect } from "react"
+import { User, AtSign, Calendar, FileText, Github, Upload, X } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
+import { Label } from "@/components/ui/label"
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+
+interface Notification {
+  message: string
+  type: "success" | "error"
+}
 
 export default function ProfilePage() {
-  const { user } = useUser();
+  const { user } = useUser()
   const [profile, setProfile] = useState({
     name: user?.fullName || "",
     accountName: "",
     icon: user?.imageUrl || "",
-    email: user?.primaryEmailAddress || "",
+    email: user?.primaryEmailAddress?.emailAddress || "",
     birthDate: "",
     bio: "",
     githubUrl: "",
-  });
+  })
+  const [notification, setNotification] = useState<Notification | null>(null)
 
-  // 入力値を更新するハンドラ
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
-    setProfile({ ...profile, [e.target.name]: e.target.value });
-  };
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    setProfile({ ...profile, [e.target.name]: e.target.value })
+  }
 
-  // アイコン画像ファイルを選択 → プレビューURLを作成
   const handleIconUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!e.target.files || e.target.files.length === 0) return;
-    const file = e.target.files[0];
-    // 選択したファイルのプレビューURLを生成 (ブラウザ限定)
-    const previewUrl = URL.createObjectURL(file);
-    // ステートにプレビューURLを格納（本番ではサーバーにアップ後のURLを入れるなど要検討）
-    setProfile({ ...profile, icon: previewUrl });
-  };
+    if (!e.target.files || e.target.files.length === 0) return
+    const file = e.target.files[0]
+    const previewUrl = URL.createObjectURL(file)
+    setProfile({ ...profile, icon: previewUrl })
+  }
 
-  // アイコンをリセット（または再変更）
   const handleIconReset = () => {
-    setProfile({ ...profile, icon: "" });
-  };
+    setProfile({ ...profile, icon: "" })
+  }
 
-  // プロフィールを保存（POSTリクエスト例）
   const saveProfile = async () => {
-    const response = await fetch("/api/createAccount", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ...profile, userId: user?.id }),
-    });
-    if (response.ok) {
-      alert("プロフィールが保存されました！");
-      window.location.href = "/dashboard"; // ダッシュボードへリダイレクト
-    } else {
-      alert("エラーが発生しました。");
+    try {
+      const response = await fetch("/api/user/createAccount", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...profile, userId: user?.id }),
+      })
+      if (response.ok) {
+        setNotification({ message: "プロフィールが保存されました", type: "success" })
+        setTimeout(() => {
+          window.location.href = "/dashboard"
+        }, 2000)
+      } else {
+        throw new Error("保存に失敗しました")
+      }
+    } catch (error) {
+      setNotification({ message: "名前とアカウント名、生年月日を入力してください。", type: "error" })
     }
-  };
+  }
+
+  useEffect(() => {
+    if (notification) {
+      const timer = setTimeout(() => {
+        setNotification(null)
+      }, 3000)
+      return () => clearTimeout(timer)
+    }
+  }, [notification])
 
   return (
-    <div>
-      <h1>プロフィール編集</h1>
-
-      <div>
-        <label>名前</label>
-        <input
-          type="text"
-          name="name"
-          value={profile.name}
-          onChange={handleChange}
-          placeholder="名前"
-        />
-      </div>
-
-      <div>
-        <label>アカウント名</label>
-        <input
-          type="text"
-          name="accountName"
-          value={profile.accountName}
-          onChange={handleChange}
-          placeholder="アカウント名"
-        />
-      </div>
-
-      <div>
-        <label>生年月日</label>
-        <input
-          type="date"
-          name="birthDate"
-          value={profile.birthDate}
-          onChange={handleChange}
-        />
-      </div>
-
-      <div>
-        <label>自己紹介</label>
-        <textarea
-          name="bio"
-          value={profile.bio}
-          onChange={handleChange}
-          placeholder="自己紹介"
-        />
-      </div>
-
-      <div>
-        <label>GitHub URL</label>
-        <input
-          type="text"
-          name="githubUrl"
-          value={profile.githubUrl}
-          onChange={handleChange}
-          placeholder="GitHub URL"
-        />
-      </div>
-
-      {/* ▼ ここからアイコン登録エリア ▼ */}
-      <div>
-        <label>アイコン</label>
-        {/* プレビュー表示 */}
-        {profile.icon && (
-          <div style={{ margin: "10px 0" }}>
-            <img
-              src={profile.icon}
-              alt="icon preview"
-              style={{ width: "100px", height: "100px", objectFit: "cover" }}
-            />
-          </div>
-        )}
-
-        <div style={{ margin: "8px 0" }}>
-          {/* ファイル選択ボタン */}
-          <input type="file" accept="image/*" onChange={handleIconUpload} />
-          {/* 変更(リセット)ボタン */}
-          <button type="button" onClick={handleIconReset}>
-            アイコンを変更
-          </button>
+    <div className="container mx-auto p-4">
+      {notification && (
+        <div
+          className={`fixed top-4 right-4 p-4 rounded-md ${
+            notification.type === "success" ? "bg-green-500" : "bg-red-500"
+          } text-white`}
+        >
+          {notification.message}
         </div>
-      </div>
-      {/* ▲ アイコン登録エリアおわり ▲ */}
+      )}
+      <Card className="w-full max-w-2xl mx-auto">
+        <CardHeader>
+          <CardTitle className="text-2xl font-bold">アカウント登録</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="flex flex-col items-center space-y-4">
+            <Avatar className="w-32 h-32">
+              <AvatarImage src={profile.icon} alt="Profile" />
+              <AvatarFallback>{profile.name.charAt(0)}</AvatarFallback>
+            </Avatar>
+            <div className="flex space-x-2">
+              <Label htmlFor="icon-upload" className="cursor-pointer">
+                <div className="flex items-center space-x-2 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2 rounded-md">
+                  <Upload size={16} />
+                  <span>アイコンをアップロード</span>
+                </div>
+                <Input id="icon-upload" type="file" accept="image/*" onChange={handleIconUpload} className="hidden" />
+              </Label>
+              {profile.icon && (
+                <Button variant="outline" onClick={handleIconReset}>
+                  <X size={16} className="mr-2" />
+                  リセット
+                </Button>
+              )}
+            </div>
+          </div>
 
-      <button onClick={saveProfile}>保存</button>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="name">名前</Label>
+              <div className="relative">
+                <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                <Input
+                  id="name"
+                  name="name"
+                  value={profile.name}
+                  onChange={handleChange}
+                  placeholder="名前"
+                  className="pl-10"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="accountName">アカウント名</Label>
+              <div className="relative">
+                <AtSign className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                <Input
+                  id="accountName"
+                  name="accountName"
+                  value={profile.accountName}
+                  onChange={handleChange}
+                  placeholder="アカウント名"
+                  className="pl-10"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="birthDate">生年月日</Label>
+              <div className="relative">
+                <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                <Input
+                  id="birthDate"
+                  name="birthDate"
+                  type="date"
+                  value={profile.birthDate}
+                  onChange={handleChange}
+                  className="pl-10"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="bio">自己紹介</Label>
+              <div className="relative">
+                <FileText className="absolute left-3 top-3 text-gray-400" />
+                <Textarea
+                  id="bio"
+                  name="bio"
+                  value={profile.bio}
+                  onChange={handleChange}
+                  placeholder="自己紹介"
+                  rows={4}
+                  className="pl-10"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="githubUrl">GitHub URL</Label>
+              <div className="relative">
+                <Github className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                <Input
+                  id="githubUrl"
+                  name="githubUrl"
+                  value={profile.githubUrl}
+                  onChange={handleChange}
+                  placeholder="https://github.com/yourusername"
+                  className="pl-10"
+                />
+              </div>
+            </div>
+          </div>
+        </CardContent>
+        <CardFooter>
+          <Button onClick={saveProfile} className="w-full">
+            保存
+          </Button>
+        </CardFooter>
+      </Card>
     </div>
-  );
+  )
 }
+

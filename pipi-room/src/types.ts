@@ -9,6 +9,7 @@ export type ArticleType = {
     date: string;
     content: string;
     labelIds: number[]; // ✅ 記事に紐づくラベルの ID を追加
+    authorIds: number[];
 };
 
 export type WorkType = {
@@ -19,5 +20,13 @@ export type WorkType = {
     icon: string | null;
     description: string | null;
     labelIds: number[]; // ✅ 作品に紐づくラベルの ID を追加
+    authorIds: number[];
 };
 
+export type UserType = {
+    id: number;
+    displayName: string;
+    avatar: string | null;
+    bio: string;
+    githubUrl: string | null;
+};

@@ -1,36 +1,45 @@
 // app/api/articles/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
-import { articles, userArticles } from "@/db/schema";
+import { articles, userArticles, articleLabels } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { getAuth } from "@clerk/nextjs/server";
 
+// ✅ 記事の新規作成（POST）
 export async function POST(req: NextRequest) {
   const { userId } = getAuth(req);
-  if (!userId) {
-    return new NextResponse("Unauthorized", { status: 401 });
+  if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const { title, date, content, labelIds } = await req.json();
+  if (!title || !date || !content) return NextResponse.json({ error: "Missing fields" }, { status: 400 });
+
+  const [newArticle] = await db.insert(articles).values({ title, date, content }).returning();
+  await db.insert(userArticles).values({ articleId: newArticle.id, userId });
+
+  if (labelIds?.length) {
+    await db.insert(articleLabels).values(
+      labelIds.map((labelId: number) => ({ articleId: newArticle.id, labelId }))
+    );
   }
 
-  const body = await req.json();
-  const { title, date, content } = body;
+  return NextResponse.json(newArticle);
+}
 
-  // articlesにINSERT
-  const [insertedArticle] = await db
-    .insert(articles)
-    .values({
-      title,
-      date: date || null,
-      content,
-    })
-    .returning();
+// ✅ 記事の編集（PATCH）
+export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
+  const { userId } = getAuth(req);
+  if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  // userArticlesにもINSERT
-  if (insertedArticle) {
-    await db.insert(userArticles).values({
-      userId,
-      articleId: insertedArticle.id,
-    });
+  const articleId = Number(params.id);
+  const { title, date, content, labelIds } = await req.json();
+  if (!title || !date || !content) return NextResponse.json({ error: "Missing fields" }, { status: 400 });
+
+  await db.update(articles).set({ title, date, content }).where(eq(articles.id, articleId));
+
+  await db.delete(articleLabels).where(eq(articleLabels.articleId, articleId));
+  if (labelIds?.length) {
+    await db.insert(articleLabels).values(labelIds.map((labelId: number) => ({ articleId, labelId })));
   }
 
-  return NextResponse.json(insertedArticle);
+  return NextResponse.json({ id: articleId, title, date, content, labelIds });
 }

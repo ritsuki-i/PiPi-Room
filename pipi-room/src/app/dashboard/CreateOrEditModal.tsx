@@ -2,7 +2,7 @@
 
 import type React from "react"
 import { useState, useEffect } from "react"
-import { Upload, Save, Plus } from "lucide-react"
+import { Trash, Upload, Save, Plus } from "lucide-react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -30,23 +30,25 @@ export default function CreateOrEditModal({
 }: CreateOrEditModalProps) {
   const [formData, setFormData] = useState<ArticleType | WorkType>(
     data ||
-      (type === "article"
-        ? ({
-            id: 0,
-            title: "",
-            date: "",
-            content: "",
-            labelIds: [],
-          } as ArticleType)
-        : ({
-            id: 0,
-            name: "",
-            date: "",
-            url: "",
-            icon: "",
-            description: "",
-            labelIds: [],
-          } as WorkType)),
+    (type === "article"
+      ? ({
+        id: 0,
+        title: "",
+        date: "",
+        content: "",
+        labelIds: [],
+        authorIds: [],
+      } as ArticleType)
+      : ({
+        id: 0,
+        name: "",
+        date: "",
+        url: "",
+        icon: "",
+        description: "",
+        labelIds: [],
+        authorIds: [],
+      } as WorkType)),
   )
 
   const [selectedLabelIds, setSelectedLabelIds] = useState<number[]>(data?.labelIds || [])
@@ -105,11 +107,89 @@ export default function CreateOrEditModal({
     return Object.keys(newErrors).length === 0
   }
 
-  const handleSubmit = () => {
-    if (validateForm()) {
-      onSave(type, { ...formData, labelIds: selectedLabelIds }, !!data)
+  const handleSubmit = async () => {
+    if (!validateForm()) return;
+
+    // 1. まだDBに無いラベルを一括作成
+    //    ここでは「id が 1兆 (Date.now() など) 以上なら未登録」とみなす例
+    const newLabelIds = selectedLabelIds.filter((id) => id >= 1_000_000_000_000);
+    const existingLabelIds = selectedLabelIds.filter((id) => id < 1_000_000_000_000);
+
+    let finalLabelIds = [...existingLabelIds];
+
+    // 2. 未登録ラベルは /api/labels にPOSTして本物のIDを取得
+    for (const tempId of newLabelIds) {
+      // ラベル配列からラベル名を取得
+      const labelObj = labels.find((lbl) => lbl.id === tempId);
+      if (!labelObj) continue;
+
+      try {
+        const res = await fetch("/api/labels", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name: labelObj.name }),
+        });
+        if (!res.ok) throw new Error("ラベル作成に失敗");
+
+        const createdLabel = await res.json();
+        // createdLabel.id => DBで発行された本物のID
+        finalLabelIds.push(createdLabel.id);
+      } catch (error) {
+        console.error(error);
+      }
     }
-  }
+
+    // 3. 記事/作品を保存
+    const endpoint = type === "article" ? "/api/articles" : "/api/works";
+    const method = data ? "PATCH" : "POST";
+    const url = data ? `${endpoint}/${data.id}` : endpoint;
+
+    try {
+      const res = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...formData,
+          labelIds: finalLabelIds, // ここで本物のラベルIDを渡す
+        }),
+      });
+
+      if (!res.ok) {
+        throw new Error(`${method} request failed`);
+      }
+
+      const result = await res.json();
+      onSave(type, result, !!data);
+      onClose();
+    } catch (error) {
+      console.error("保存に失敗しました:", error);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!data) return; // そもそも新規作成時は削除不可
+    if (!confirm("本当に削除しますか？")) return;
+
+    const endpoint = type === "article" ? "/api/articles" : "/api/works";
+    const url = `${endpoint}/${data.id}`;
+
+    try {
+      const res = await fetch(url, {
+        method: "DELETE",
+      });
+      if (!res.ok) {
+        throw new Error("削除に失敗しました");
+      }
+      // 削除完了したら、モーダルを閉じるなど
+      onClose();
+      // 必要に応じて onSave() や リスト再読み込みの処理を呼ぶ場合もある
+    } catch (error) {
+      console.error("削除エラー:", error);
+    }
+  };
+
+
+
 
   return (
     <Dialog open={true} onOpenChange={onClose}>
@@ -282,6 +362,12 @@ export default function CreateOrEditModal({
           <Button variant="outline" onClick={onClose}>
             キャンセル
           </Button>
+          {data && (
+            <Button variant="destructive" onClick={handleDelete}>
+              <Trash className="mr-2 h-4 w-4" />
+              削除
+            </Button>
+          )}
           <Button onClick={handleSubmit}>
             <Save className="mr-2 h-4 w-4" />
             保存

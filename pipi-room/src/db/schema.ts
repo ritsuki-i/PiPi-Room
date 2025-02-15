@@ -1,4 +1,4 @@
-import { pgTable, varchar, text, date, timestamp, integer } from "drizzle-orm/pg-core";
+import { pgTable, varchar, text, date, timestamp, integer, bigserial, bigint } from "drizzle-orm/pg-core";
 
 // users テーブル
 export const users = pgTable("users", {
@@ -15,7 +15,7 @@ export const users = pgTable("users", {
 
 // articles テーブル
 export const articles = pgTable("articles", {
-  id: varchar("id", { length: 255 }).primaryKey(),
+  id: bigserial("id", { mode: "number" }).primaryKey(),
   title: varchar("title", { length: 255 }).notNull(),
   date: date("date").notNull(),
   content: text("content").notNull(),
@@ -23,7 +23,7 @@ export const articles = pgTable("articles", {
 
 // works テーブル
 export const works = pgTable("works", {
-  id: varchar("id", { length: 255 }).primaryKey(),
+  id: bigserial("id", { mode: "number" }).primaryKey(),
   name: varchar("name", { length: 255 }).notNull(),
   date: date("date").notNull(),
   url: text("url"),
@@ -33,32 +33,48 @@ export const works = pgTable("works", {
 
 // labels テーブル
 export const labels = pgTable("labels", {
-  id: varchar("id", { length: 255 }).primaryKey(),
+  id: bigserial("id", { mode: "number" }).primaryKey(),
   name: varchar("name", { length: 255 }).unique().notNull(),
 });
 
 // user_articles（ユーザーと記事の中間テーブル）
 export const userArticles = pgTable("user_articles", {
   userId: varchar("user_id", { length: 255 }).references(() => users.id, { onDelete: "cascade" }),
-  articleId: varchar("article_id", { length: 255 }).references(() => articles.id, { onDelete: "cascade" }),
+
+  articleId: bigint("article_id", { mode: "number" })
+    .references(() => articles.id, { onDelete: "cascade" })
+    .notNull(),
 });
 
 // user_works（ユーザーとアプリの中間テーブル）
 export const userWorks = pgTable("user_works", {
   userId: varchar("user_id", { length: 255 }).references(() => users.id, { onDelete: "cascade" }),
-  workId: varchar("work_id", { length: 255 }).references(() => works.id, { onDelete: "cascade" }),
+
+  workId: bigint("work_id", { mode: "number" })
+    .references(() => works.id, { onDelete: "cascade" })
+    .notNull(),
 });
 
 // article_labels（記事とラベルの中間テーブル）
 export const articleLabels = pgTable("article_labels", {
-  articleId: varchar("article_id", { length: 255 }).references(() => articles.id, { onDelete: "cascade" }),
-  labelId: varchar("label_id", { length: 255 }).references(() => labels.id, { onDelete: "cascade" }),
+  articleId: bigint("article_id", { mode: "number" })
+    .references(() => articles.id, { onDelete: "cascade" })
+    .notNull(),
+
+  labelId: bigint("label_id", { mode: "number" })
+    .references(() => labels.id, { onDelete: "cascade" })
+    .notNull(),
 });
 
 // work_labels（アプリとラベルの中間テーブル）
 export const workLabels = pgTable("work_labels", {
-  workId: varchar("work_id", { length: 255 }).references(() => works.id, { onDelete: "cascade" }),
-  labelId: varchar("label_id", { length: 255 }).references(() => labels.id, { onDelete: "cascade" }),
+  workId: bigint("work_id", { mode: "number" })
+    .references(() => works.id, { onDelete: "cascade" })
+    .notNull(),
+
+  labelId: bigint("label_id", { mode: "number" })
+    .references(() => labels.id, { onDelete: "cascade" })
+    .notNull(),
 });
 
 // user_learning_records（ユーザーの学習記録）

@@ -1,5 +1,5 @@
 {
-  "id": "b4609864-8d20-485b-8266-604975dbd52c",
+  "id": "5f52c232-0337-492b-8a92-3aa0f689571f",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -10,15 +10,15 @@
       "columns": {
         "article_id": {
           "name": "article_id",
-          "type": "uuid",
+          "type": "bigint",
           "primaryKey": false,
-          "notNull": false
+          "notNull": true
         },
         "label_id": {
           "name": "label_id",
-          "type": "uuid",
+          "type": "bigint",
           "primaryKey": false,
-          "notNull": false
+          "notNull": true
         }
       },
       "indexes": {},
@@ -62,7 +62,7 @@
       "columns": {
         "id": {
           "name": "id",
-          "type": "uuid",
+          "type": "bigserial",
           "primaryKey": true,
           "notNull": true
         },
@@ -99,7 +99,7 @@
       "columns": {
         "id": {
           "name": "id",
-          "type": "uuid",
+          "type": "bigserial",
           "primaryKey": true,
           "notNull": true
         },
@@ -132,15 +132,15 @@
       "columns": {
         "user_id": {
           "name": "user_id",
-          "type": "uuid",
+          "type": "varchar(255)",
           "primaryKey": false,
           "notNull": false
         },
         "article_id": {
           "name": "article_id",
-          "type": "uuid",
+          "type": "bigint",
           "primaryKey": false,
-          "notNull": false
+          "notNull": true
         }
       },
       "indexes": {},
@@ -184,7 +184,7 @@
       "columns": {
         "user_id": {
           "name": "user_id",
-          "type": "uuid",
+          "type": "varchar(255)",
           "primaryKey": false,
           "notNull": false
         },
@@ -229,15 +229,15 @@
       "columns": {
         "user_id": {
           "name": "user_id",
-          "type": "uuid",
+          "type": "varchar(255)",
           "primaryKey": false,
           "notNull": false
         },
         "work_id": {
           "name": "work_id",
-          "type": "uuid",
+          "type": "bigint",
           "primaryKey": false,
-          "notNull": false
+          "notNull": true
         }
       },
       "indexes": {},
@@ -281,7 +281,7 @@
       "columns": {
         "id": {
           "name": "id",
-          "type": "uuid",
+          "type": "varchar(255)",
           "primaryKey": true,
           "notNull": true
         },
@@ -357,15 +357,15 @@
       "columns": {
         "work_id": {
           "name": "work_id",
-          "type": "uuid",
+          "type": "bigint",
           "primaryKey": false,
-          "notNull": false
+          "notNull": true
         },
         "label_id": {
           "name": "label_id",
-          "type": "uuid",
+          "type": "bigint",
           "primaryKey": false,
-          "notNull": false
+          "notNull": true
         }
       },
       "indexes": {},
@@ -409,7 +409,7 @@
       "columns": {
         "id": {
           "name": "id",
-          "type": "uuid",
+          "type": "bigserial",
           "primaryKey": true,
           "notNull": true
         },
@@ -429,7 +429,7 @@
           "name": "url",
           "type": "text",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
         },
         "icon": {
           "name": "icon",

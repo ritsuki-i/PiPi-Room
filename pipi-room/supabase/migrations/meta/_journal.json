@@ -5,22 +5,8 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1739037815117,
-      "tag": "0000_windy_slapstick",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "7",
-      "when": 1739283236749,
-      "tag": "0001_faulty_jackpot",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1739293665454,
-      "tag": "0002_tired_sasquatch",
+      "when": 1739481218987,
+      "tag": "0000_tearful_morlocks",
       "breakpoints": true
     }
   ]

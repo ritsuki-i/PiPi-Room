@@ -1,6 +1,7 @@
 import { SignedIn, SignedOut, SignInButton, SignOutButton, SignUpButton } from "@clerk/nextjs"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
+import Image from "next/image";
 
 
 export default function Header() {
@@ -9,9 +10,12 @@ export default function Header() {
     return (
         <div className="border-b">
             <header className="container mx-auto px-3 py-4 flex items-center justify-between">
-                <h1 className="font-bold text-[30px]">
-                    <Link href="/">PiPi Room</Link>
-                </h1>
+                <div className="flex items-center justify-between gap-x-4">
+                    <Image className="" src="/images/PiedPiperlogo.png" alt="Logo" width={50} height={50} />
+                    <h1 className="font-bold text-[30px]">
+                        <Link href="/">PiPi Room</Link>
+                    </h1>
+                </div>
                 <nav className="flex items-center space-x-6">
                     <ul className="flex space-x-4 items-center">
                         <li>

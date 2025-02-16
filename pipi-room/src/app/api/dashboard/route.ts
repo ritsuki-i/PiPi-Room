@@ -47,8 +47,8 @@ export async function GET(req: NextRequest) {
             labelIds: [],  // ✅ `labelId` も配列にする
           };
         }
-        if (article.authorId && !acc[article.id].authorIds.includes(Number(article.authorId))) {
-          acc[article.id].authorIds.push(Number(article.authorId));
+        if (article.authorId && !acc[article.id].authorIds.includes(article.authorId)) {
+          acc[article.id].authorIds.push(article.authorId);
         }
         if (article.labelId && !acc[article.id].labelIds.includes(Number(article.labelId))) {
           acc[article.id].labelIds.push(Number(article.labelId));
@@ -99,11 +99,11 @@ export async function GET(req: NextRequest) {
           labelIds: [],  // ✅ `labelIds` も配列にする
         };
       }
-      if (work.authorId && !acc[work.id].authorIds.includes(Number(work.authorId))) {
-        acc[work.id].authorIds.push(Number(work.authorId));
+      if (work.authorId && !acc[work.id].authorIds.includes(work.authorId)) {
+        acc[work.id].authorIds.push(work.authorId);
       }
-      if (work.labelId && !acc[work.id].labelIds.includes(work.labelId)) {
-        acc[work.id].labelIds.push(work.labelId);
+      if (work.labelId && !acc[work.id].labelIds.includes(Number(work.labelId))) {
+        acc[work.id].labelIds.push(Number(work.labelId));
       }
       return acc;
     }, {} as Record<number, WorkType>)

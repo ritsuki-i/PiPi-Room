@@ -13,7 +13,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useRouter } from "next/navigation";
 
 export default function ProfilePage() {
-  const { user } = useUser()
+  const { user } = useUser();
   const router = useRouter();
   const [loading, setLoading] = useState(true)
   const [profile, setProfile] = useState({

@@ -1,11 +1,13 @@
+"use client";
 import { SignedIn, SignedOut, SignInButton, SignOutButton } from "@clerk/nextjs"
 import Link from "next/link"
+import { useUser } from "@clerk/nextjs";
 import { Button } from "@/components/ui/button"
 import Image from "next/image";
 
 
 export default function Header() {
-
+    const { user } = useUser();
 
     return (
         <div className="border-b">
@@ -17,28 +19,35 @@ export default function Header() {
                     </h1>
                 </div>
                 <nav className="flex items-center space-x-6">
-                    <ul className="flex space-x-4 items-center">
-                        <li>
-                            <Link href="/works" className="text-sm hover:text-gray-600 transition-colors">
-                                Works
-                            </Link>
-                        </li>
-                        <li>
-                            <Link href="/articles" className="text-sm hover:text-gray-600 transition-colors">
-                                Articles
-                            </Link>
-                        </li>
-                        <li>
-                            <Link href="/dashboard" className="text-sm hover:text-gray-600 transition-colors">
-                                Dashboard
-                            </Link>
-                        </li>
-                        <li>
-                            <Link href="/user/profile" className="text-sm hover:text-gray-600 transition-colors">
-                                Profile
-                            </Link>
-                        </li>
-                    </ul>
+                    <SignedIn>
+                        <ul className="flex space-x-4 items-center">
+                            <li>
+                                <Link href="/works" className="text-sm hover:text-gray-600 transition-colors">
+                                    Works
+                                </Link>
+                            </li>
+                            <li>
+                                <Link href="/articles" className="text-sm hover:text-gray-600 transition-colors">
+                                    Articles
+                                </Link>
+                            </li>
+                            <li>
+                                <Link href="/dashboard" className="text-sm hover:text-gray-600 transition-colors">
+                                    Dashboard
+                                </Link>
+                            </li>
+                            <li>
+                                <Link href="/user/profile" className="text-sm hover:text-gray-600 transition-colors">
+                                    Profile
+                                </Link>
+                            </li>
+                        </ul>
+                        <SignOutButton>
+                            <Button variant="default" size="sm">
+                                Sign Out
+                            </Button>
+                        </SignOutButton>
+                    </SignedIn>
                     <SignedOut>
                         <SignInButton fallbackRedirectUrl={'/dashboard'} mode="modal">
                             <Button variant="default" size="sm">
@@ -46,13 +55,6 @@ export default function Header() {
                             </Button>
                         </SignInButton>
                     </SignedOut>
-                    <SignedIn>
-                        <SignOutButton>
-                            <Button variant="default" size="sm">
-                                Sign Out
-                            </Button>
-                        </SignOutButton>
-                    </SignedIn>
                 </nav>
             </header>
         </div>

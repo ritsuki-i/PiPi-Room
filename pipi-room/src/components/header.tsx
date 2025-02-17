@@ -7,7 +7,6 @@ import Image from "next/image";
 
 
 export default function Header() {
-    const { user } = useUser();
 
     return (
         <div className="border-b">

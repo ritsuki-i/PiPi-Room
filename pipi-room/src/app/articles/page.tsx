@@ -4,7 +4,8 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { ArticleType, UserType, LabelType } from "../../types";
+import { ArticleType, UserType, LabelType } from "@/types";
+import Image from 'next/image'
 
 export default function ArticleList() {
   const [articles, setArticles] = useState<ArticleType[]>([]);
@@ -63,14 +64,24 @@ export default function ArticleList() {
               </CardTitle>
             </CardHeader>
             <CardContent>
+              {/* ラベル */}
+              <div className="mt-2">
+                {(article.labelIds ?? []).map((labelId) => (
+                  <span key={labelId} className="bg-blue-100 text-blue-600 px-2 py-1 rounded text-xs mr-2">
+                    {labels[labelId]?.name}
+                  </span>
+                ))}
+              </div>
+
               <p className="text-sm text-gray-500">{article.date}</p>
               {/* 作成者情報を表示 */}
               {firstAuthor ? (
                 <div className="flex items-center mt-2">
-                  <img
+                  <Image
                     src={firstAuthor.icon || "/images/default-avatar.jpeg"}
                     alt="作成者"
                     className="w-8 h-8 rounded-full"
+                    width={64} height={64}
                   />
                   <span>{firstAuthor.name}</span>
                 </div>
@@ -91,6 +102,14 @@ export default function ArticleList() {
               <DialogTitle className="text-2xl font-bold">{selectedArticle.title}</DialogTitle>
             </DialogHeader>
             <div className="flex flex-col space-y-4">
+            <div>
+                {(selectedArticle.labelIds ?? []).map(labelId => (
+                  <span key={labelId} className="bg-blue-100 text-blue-600 px-2 py-1 rounded text-xs mr-2">
+                    {labels[labelId]?.name}
+                  </span>
+                ))}
+              </div>
+
               <p className="text-sm text-gray-500">{selectedArticle.date}</p>
 
               {/* 作成者を複数表示 */}
@@ -98,10 +117,11 @@ export default function ArticleList() {
                 {selectedArticle.authorIds?.map((authorId) => (
                   users[authorId] && (
                     <Button key={authorId} variant="link" onClick={() => setSelectedUser(users[authorId])}>
-                      <img
+                      <Image
                         src={users[authorId].icon || "/images/default-avatar.jpeg"}
                         alt="作成者"
                         className="w-10 h-10 rounded-full"
+                        width={64} height={64}
                       />
                       <span>{users[authorId].name}</span>
                     </Button>
@@ -124,7 +144,7 @@ export default function ArticleList() {
               <DialogTitle>{selectedUser.name}</DialogTitle>
             </DialogHeader>
             <div className="flex flex-col space-y-4">
-              <img src={selectedUser.icon || "/images/default-avatar.jpeg"} alt="作成者" className="w-16 h-16 mx-auto rounded-full" />
+              <Image src={selectedUser.icon || "/images/default-avatar.jpeg"} alt="作成者" className="w-16 h-16 mx-auto rounded-full" width={64} height={64} />
               <p>{selectedUser.bio}</p>
               {selectedUser.githubUrl ? (
                 // GitHub URL がある場合

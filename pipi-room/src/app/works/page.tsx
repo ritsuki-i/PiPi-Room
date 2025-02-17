@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { WorkType, UserType, LabelType } from "../../types";
+import Image from "next/image";
 
 export default function WorkList() {
   const [works, setWorks] = useState<WorkType[]>([]);
@@ -56,7 +57,7 @@ export default function WorkList() {
           return (
             <Card key={work.id} className="p-0">
               <CardHeader className="flex items-center p-0">
-                <img src={work.icon || "/images/noimg.png"} alt={work.name} className="w-[100%] h-[200px] object-cover" />
+                <Image src={work.icon || "/images/noimg.png"} alt={work.name} className="w-[100%] h-[200px] object-cover" width={100} height={100} />
                 <CardTitle className="text-2xl font-bold">{work.name}</CardTitle>
               </CardHeader>
               <CardContent>
@@ -90,7 +91,7 @@ export default function WorkList() {
         return (
           <Card key={work.id} className="p-0">
             <CardHeader className="flex items-center p-0">
-              <img src={work.icon || "/images/noimg.png"} alt={work.name} className="w-[100%] h-[200px] object-cover" />
+              <Image src={work.icon || "/images/noimg.png"} alt={work.name} className="w-[100%] h-[200px] object-cover" width={100} height={100}/>
               <CardTitle className="text-2xl font-bold">{work.name}</CardTitle>
             </CardHeader>
             <CardContent>
@@ -107,10 +108,11 @@ export default function WorkList() {
 
               {/* 作成者を1人だけ + 残りn人 */}
               <div className="flex items-center space-x-2">
-                <img
+                <Image
                   src={firstAuthor.icon || "/images/default-avatar.jpeg"}
                   alt="作成者"
                   className="w-8 h-8 rounded-full"
+                  width={100} height={100}
                 />
                 <span>{firstAuthor.name}</span>
                 {othersCount > 0 && (
@@ -134,7 +136,7 @@ export default function WorkList() {
               <DialogTitle className="text-2xl font-bold text-center">{selectedWork.name}</DialogTitle>
             </DialogHeader>
             <div className="flex flex-col space-y-4">
-              <img src={selectedWork.icon || "/images/noimg.png"} alt={selectedWork.name} className="w-[100%] h-[200px] object-cover" />
+              <Image src={selectedWork.icon || "/images/noimg.png"} alt={selectedWork.name} className="w-[100%] h-[200px] object-cover" width={100} height={100}/>
               <p>{selectedWork.description}</p>
               <div>
                 {(selectedWork.labelIds ?? []).map(labelId => (
@@ -149,7 +151,7 @@ export default function WorkList() {
                 {(selectedWork.authorIds ?? []).map(authorId => (
                   users[authorId] && (
                     <Button key={authorId} variant="link" onClick={() => setSelectedUser(users[authorId])}>
-                      <img src={users[authorId].icon || "/images/default-avatar.jpeg"} alt="作成者" className="w-10 h-10 rounded-full" />
+                      <Image src={users[authorId].icon || "/images/default-avatar.jpeg"} alt="作成者" className="w-10 h-10 rounded-full" width={100} height={100}/>
                       <span>{users[authorId].name}</span>
                     </Button>
                   )
@@ -174,7 +176,7 @@ export default function WorkList() {
               <DialogTitle>{selectedUser.name}</DialogTitle>
             </DialogHeader>
             <div className="flex flex-col space-y-4">
-              <img src={selectedUser.icon || "/images/default-avatar.jpeg"} alt="作成者" className="w-16 h-16 mx-auto rounded-full" />
+              <Image src={selectedUser.icon || "/images/default-avatar.jpeg"} alt="作成者" className="w-16 h-16 mx-auto rounded-full" width={100} height={100}/>
               <p>{selectedUser.bio}</p>
               {selectedUser.githubUrl ? (
                 // GitHub URL がある場合

@@ -62,6 +62,7 @@ export default function ProfilePage() {
       }
     } catch (error) {
       setNotification({ message: "名前とアカウント名、生年月日を入力してください。", type: "error" })
+      console.log(error);
     }
   }
 

@@ -9,7 +9,8 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
-import type { ArticleType, WorkType, LabelType } from "../../types"
+import type { ArticleType, WorkType, LabelType } from "@/types"
+import Image from "next/image"
 
 interface CreateOrEditModalProps {
   type: "article" | "work"
@@ -115,7 +116,7 @@ export default function CreateOrEditModal({
     const newLabelIds = selectedLabelIds.filter((id) => id >= 1_000_000_000_000);
     const existingLabelIds = selectedLabelIds.filter((id) => id < 1_000_000_000_000);
 
-    let finalLabelIds = [...existingLabelIds];
+    const finalLabelIds = [...existingLabelIds];
 
     // 2. 未登録ラベルは /api/labels にPOSTして本物のIDを取得
     for (const tempId of newLabelIds) {
@@ -319,9 +320,11 @@ export default function CreateOrEditModal({
                   </Button>
                   {imagePreview && (
                     <div className="mt-2">
-                      <img
+                      <Image
                         src={imagePreview || "/placeholder.svg"}
                         alt="Preview"
+                        width={128}
+                        height={128} 
                         className="max-w-full h-auto max-h-32 object-contain"
                       />
                     </div>

@@ -5,7 +5,7 @@ import { works, userWorks, workLabels } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
 import { getAuth } from "@clerk/nextjs/server";
 
-export async function PATCH(req: NextRequest, { params }: any) {
+export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
   const { userId } = getAuth(req);
   if (!userId) {
       return new NextResponse("Unauthorized", { status: 401 });
@@ -58,7 +58,7 @@ export async function PATCH(req: NextRequest, { params }: any) {
   return NextResponse.json({ success: true });
 }
 
-export async function DELETE(req: NextRequest, { params }: any) {
+export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
     const { userId } = getAuth(req);
     if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

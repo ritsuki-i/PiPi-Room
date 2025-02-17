@@ -2,9 +2,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
 import { works, userWorks, workLabels } from "@/db/schema";
-import { eq, inArray } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { getAuth } from "@clerk/nextjs/server";
-import { WorkType, UserType, LabelType } from "../../../types";
+import { WorkType } from "@/types";
 
 // ✅ 作品の新規作成（POST）
 export async function POST(req: NextRequest) {
@@ -66,7 +66,7 @@ export async function POST(req: NextRequest) {
 }
 
 
-export async function GET(req: NextRequest) {
+export async function GET() {
     // ✅ `works` と `userWorks` を結合し、すべての `authorId` を取得
     const workData = await db
         .select({

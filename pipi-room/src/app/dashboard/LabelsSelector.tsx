@@ -1,7 +1,8 @@
 import { Checkbox } from "@/components/ui/checkbox"
+import { LabelType } from "@/types"
 
 interface LabelsSelectorProps {
-  labels: any[]
+  labels: LabelType[]
   selectedLabelIds: string[]
   setSelectedLabelIds: (ids: string[]) => void
 }

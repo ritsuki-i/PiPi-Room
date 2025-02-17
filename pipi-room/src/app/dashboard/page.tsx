@@ -20,6 +20,21 @@ export default function DashboardPage() {
     // Clerk でログイン済みかどうかを確認
     if (!user?.id) return;
 
+    const checkUserExists = async () => {
+
+      try {
+        const res = await fetch("/api/user/check");
+        const data = await res.json();
+
+        if (!data.exists) {
+          // ✅ ユーザーが存在しない場合 `/user/createAccount` にリダイレクト
+          router.push("/user/createAccount");
+        }
+      } catch (error) {
+        console.error("ユーザーの存在チェックに失敗しました:", error);
+      }
+    };
+
     const fetchDashboard = async () => {
       try {
         const res = await fetch("/api/dashboard", {
@@ -43,28 +58,13 @@ export default function DashboardPage() {
       }
     };
 
-    fetchDashboard();
-  }, [user?.id]);
+    async function displayDashboard() {
+      await checkUserExists();
+      await fetchDashboard();
+    }
 
-  useEffect(() => {
-    const checkUserExists = async () => {
-      if (!user?.id) return;
-
-      try {
-        const res = await fetch("/api/user/check");
-        const data = await res.json();
-
-        if (!data.exists) {
-          // ✅ ユーザーが存在しない場合 `/user/createAccount` にリダイレクト
-          router.push("/user/createAccount");
-        }
-      } catch (error) {
-        console.error("ユーザーの存在チェックに失敗しました:", error);
-      }
-    };
-
-    checkUserExists();
-  }, [user, router]);
+    displayDashboard();
+  }, [user?.id, user, router]);
 
   if (!user) return <div>ログインが必要です</div>; // ✅ ログインしていない場合の表示
 

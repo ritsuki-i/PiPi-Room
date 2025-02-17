@@ -65,26 +65,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(newWork);
 }
 
-// ✅ 作品の編集（PATCH）
-export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
-    const { userId } = getAuth(req);
-    if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
-    const workId = Number(params.id);
-    const { name, date, url, icon, description, labelIds }: { name: string; date: string; url?: string; icon?: string; description?: string; labelIds: number[] } = await req.json();
-    if (!name || !date) return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
-
-    // ✅ 作品データを更新
-    await db.update(works).set({ name, date, url, icon, description }).where(eq(works.id, workId));
-
-    // ✅ `workLabels` を削除して、新しいラベルを追加
-    await db.delete(workLabels).where(eq(workLabels.workId, workId));
-    if (labelIds?.length) {
-        await db.insert(workLabels).values(labelIds.map((labelId: number) => ({ workId, labelId })));
-    }
-
-    return NextResponse.json({ id: workId, name, date, url, icon, description, labelIds });
-}
 
 export async function GET(req: NextRequest) {
     // ✅ `works` と `userWorks` を結合し、すべての `authorId` を取得

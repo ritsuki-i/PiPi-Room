@@ -145,6 +145,7 @@ export default function CreateOrEditModal({
     const url = data ? `${endpoint}/${data.id}` : endpoint;
 
     try {
+
       const res = await fetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
@@ -298,37 +299,37 @@ export default function CreateOrEditModal({
                   rows={3}
                 />
               </div>
+
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="icon" className="text-right">
+                  アイコン
+                </Label>
+                <div className="col-span-3">
+                  <Input
+                    id="icon"
+                    name="icon"
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageUpload}
+                    className="hidden"
+                  />
+                  <Button variant="outline" onClick={() => document.getElementById("icon")?.click()}>
+                    <Upload className="mr-2 h-4 w-4" />
+                    画像をアップロード
+                  </Button>
+                  {imagePreview && (
+                    <div className="mt-2">
+                      <img
+                        src={imagePreview || "/placeholder.svg"}
+                        alt="Preview"
+                        className="max-w-full h-auto max-h-32 object-contain"
+                      />
+                    </div>
+                  )}
+                </div>
+              </div>
             </>
           )}
-
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="icon" className="text-right">
-              アイコン
-            </Label>
-            <div className="col-span-3">
-              <Input
-                id="icon"
-                name="icon"
-                type="file"
-                accept="image/*"
-                onChange={handleImageUpload}
-                className="hidden"
-              />
-              <Button variant="outline" onClick={() => document.getElementById("icon")?.click()}>
-                <Upload className="mr-2 h-4 w-4" />
-                画像をアップロード
-              </Button>
-              {imagePreview && (
-                <div className="mt-2">
-                  <img
-                    src={imagePreview || "/placeholder.svg"}
-                    alt="Preview"
-                    className="max-w-full h-auto max-h-32 object-contain"
-                  />
-                </div>
-              )}
-            </div>
-          </div>
 
           <div className="grid grid-cols-4 items-start gap-4">
             <Label className="text-right">ラベル</Label>

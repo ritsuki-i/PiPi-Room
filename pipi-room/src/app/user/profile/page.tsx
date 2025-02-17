@@ -1,7 +1,6 @@
 "use client"
 
 import type React from "react"
-
 import { useUser } from "@clerk/nextjs"
 import { useState, useEffect } from "react"
 import { Upload } from "lucide-react"
@@ -11,9 +10,11 @@ import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { useRouter } from "next/navigation";
 
 export default function ProfilePage() {
   const { user } = useUser()
+  const router = useRouter();
   const [loading, setLoading] = useState(true)
   const [profile, setProfile] = useState({
     name: "",
@@ -27,6 +28,21 @@ export default function ProfilePage() {
 
   useEffect(() => {
     if (!user?.id) return
+
+    const checkUserExists = async () => {
+
+      try {
+        const res = await fetch("/api/user/check");
+        const data = await res.json();
+
+        if (!data.exists) {
+          // ✅ ユーザーが存在しない場合 `/user/createAccount` にリダイレクト
+          router.push("/user/createAccount");
+        }
+      } catch (error) {
+        console.error("ユーザーの存在チェックに失敗しました:", error);
+      }
+    };
 
     const fetchProfile = async () => {
       try {
@@ -52,8 +68,14 @@ export default function ProfilePage() {
       }
     }
 
-    fetchProfile()
-  }, [user?.id])
+    async function displayDashboard() {
+      await checkUserExists();
+      await fetchProfile();
+    }
+
+    displayDashboard();
+
+  }, [user?.id, user, router])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setProfile({

@@ -17,12 +17,12 @@ export default function LabelsSelector({ labels, selectedLabelIds, setSelectedLa
 
   return (
     <div>
-      {labels.map((label: any) => (
+      {labels.map((label) => (
         <div key={label.id} className="flex items-center space-x-2">
           <Checkbox
-            id={label.id}
-            checked={selectedLabelIds.includes(label.id)}
-            onChange={() => handleCheckboxChange(label.id)}
+            id={label.id.toString()}
+            checked={selectedLabelIds.includes(label.id.toString())}
+            onChange={() => handleCheckboxChange(label.id.toString())}
           />
           <span>{label.name}</span>
         </div>

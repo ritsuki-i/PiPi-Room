@@ -1,7 +1,7 @@
-// app/api/works/[id]/route.ts
+// app/api/articles/[id]/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
-import { works, userWorks, workLabels } from "@/db/schema";
+import { articles, userArticles, articleLabels } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
 import { getAuth } from "@clerk/nextjs/server";
 
@@ -10,48 +10,46 @@ export async function PATCH(req: NextRequest, { params }: any) {
   if (!userId) {
       return new NextResponse("Unauthorized", { status: 401 });
   }
-  const workId = Number(params.id);
+  const articleId = Number(params.id);
 
   // まず対象作品がユーザーのものかチェック
   const link = await db
       .select()
-      .from(userWorks)
-      .where(and(eq(userWorks.userId, userId), eq(userWorks.workId, workId)));
+      .from(userArticles)
+      .where(and(eq(userArticles.userId, userId), eq(userArticles.articleId, articleId)));
 
   if (link.length === 0) {
       return new NextResponse("Forbidden", { status: 403 });
   }
 
   const body = await req.json();
-  if (!body.name && !body.date && !body.url && !body.icon && !body.description && !body.labelIds) {
+  if (!body.name && !body.date && !body.content && !body.labelIds) {
       return new NextResponse("Bad Request: No valid fields to update", { status: 400 });
   }
 
   // 更新処理
   await db
-      .update(works)
+      .update(articles)
       .set({
-          name: body.name,
+          title: body.title,
           date: body.date,
-          url: body.url,
-          icon: body.icon,
-          description: body.description,
+          content: body.content,
       })
-      .where(eq(works.id, workId));
+      .where(eq(articles.id, articleId));
 
   // もし labelIds がある場合、中間テーブルを更新
   if (body.labelIds && Array.isArray(body.labelIds)) {
       // 既存の関連ラベルを削除
-      await db.delete(workLabels).where(eq(workLabels.workId, workId));
+      await db.delete(articleLabels).where(eq(articleLabels.articleId, articleId));
 
       // 新しいラベルを挿入
       const newLabels = body.labelIds.map((labelId: number) => ({
-          workId,
+          articleId,
           labelId,
       }));
 
       if (newLabels.length > 0) {
-          await db.insert(workLabels).values(newLabels);
+          await db.insert(articleLabels).values(newLabels);
       }
   }
 
@@ -64,28 +62,28 @@ export async function DELETE(req: NextRequest, { params }: any) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
   
-    const workId = Number(params.id);
+    const articleId = Number(params.id);
   
-    // 所有権チェック (userWorks にレコードがあるか)
+    // 所有権チェック (userarticles にレコードがあるか)
     const link = await db
       .select()
-      .from(userWorks)
-      .where(and(eq(userWorks.userId, userId), eq(userWorks.workId, workId))); // 修正
+      .from(userArticles)
+      .where(and(eq(userArticles.userId, userId), eq(userArticles.articleId, articleId))); // 修正
   
     if (link.length === 0) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
   
-    // 関連中間テーブル (work_labels など) も削除
-    await db.delete(workLabels).where(eq(workLabels.workId, workId));
+    // 関連中間テーブル (article_labels など) も削除
+    await db.delete(articleLabels).where(eq(articleLabels.articleId, articleId));
   
-    // userWorks から削除
+    // userarticles から削除
     await db
-      .delete(userWorks)
-      .where(and(eq(userWorks.userId, userId), eq(userWorks.workId, workId)));
+      .delete(userArticles)
+      .where(and(eq(userArticles.userId, userId), eq(userArticles.articleId, articleId)));
   
-    // works 本体を削除 (共有作品でないなら)
-    await db.delete(works).where(eq(works.id, workId));
+    // articles 本体を削除 (共有作品でないなら)
+    await db.delete(articles).where(eq(articles.id, articleId));
   
     return NextResponse.json({ success: true });
   }

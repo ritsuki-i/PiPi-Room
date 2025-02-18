@@ -1,5 +1,5 @@
 {
-  "id": "c3b3704a-c490-408e-916e-44f1e9b555fc",
+  "id": "208af138-d4e1-4da8-8b86-4dbbf02e13e8",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -42,6 +42,58 @@
           "tableTo": "labels",
           "columnsFrom": [
             "label_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.article_technologies": {
+      "name": "article_technologies",
+      "schema": "",
+      "columns": {
+        "article_id": {
+          "name": "article_id",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "technologie_id": {
+          "name": "technologie_id",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "article_technologies_article_id_articles_id_fk": {
+          "name": "article_technologies_article_id_articles_id_fk",
+          "tableFrom": "article_technologies",
+          "tableTo": "articles",
+          "columnsFrom": [
+            "article_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "article_technologies_technologie_id_technologies_id_fk": {
+          "name": "article_technologies_technologie_id_technologies_id_fk",
+          "tableFrom": "article_technologies",
+          "tableTo": "technologies",
+          "columnsFrom": [
+            "technologie_id"
           ],
           "columnsTo": [
             "id"
@@ -116,6 +168,39 @@
       "uniqueConstraints": {
         "labels_name_unique": {
           "name": "labels_name_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "name"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.technologies": {
+      "name": "technologies",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "bigserial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "technologies_name_unique": {
+          "name": "technologies_name_unique",
           "nullsNotDistinct": false,
           "columns": [
             "name"
@@ -389,6 +474,58 @@
           "tableTo": "labels",
           "columnsFrom": [
             "label_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.work_technologies": {
+      "name": "work_technologies",
+      "schema": "",
+      "columns": {
+        "work_id": {
+          "name": "work_id",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "technologie_id": {
+          "name": "technologie_id",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "work_technologies_work_id_works_id_fk": {
+          "name": "work_technologies_work_id_works_id_fk",
+          "tableFrom": "work_technologies",
+          "tableTo": "works",
+          "columnsFrom": [
+            "work_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "work_technologies_technologie_id_technologies_id_fk": {
+          "name": "work_technologies_technologie_id_technologies_id_fk",
+          "tableFrom": "work_technologies",
+          "tableTo": "technologies",
+          "columnsFrom": [
+            "technologie_id"
           ],
           "columnsTo": [
             "id"

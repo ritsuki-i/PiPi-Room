@@ -15,18 +15,20 @@ import {
     PaginationPrevious,
 } from "@/components/ui/pagination"
 import CreateOrEditModal from "./CreateOrEditModal"
-import type { ArticleType, WorkType, LabelType } from "../../types"
+import type { ArticleType, WorkType, LabelType, TechnologieType } from "@/types"
 
 type Props = {
     initialArticles: ArticleType[]
     initialWorks: WorkType[]
     initialLabels: LabelType[]
+    initialTechnologies: TechnologieType[]
 }
 
-export default function DashboardClient({ initialArticles, initialWorks, initialLabels }: Props) {
+export default function DashboardClient({ initialArticles, initialWorks, initialLabels, initialTechnologies }: Props) {
     const [articles, setArticles] = useState<ArticleType[]>(initialArticles)
     const [works, setWorks] = useState<WorkType[]>(initialWorks)
     const [labels, setLabels] = useState<LabelType[]>(initialLabels)
+    const [technologies, setTechnologies] = useState<TechnologieType[]>(initialTechnologies)
     const [showModal, setShowModal] = useState(false)
     const [editTarget, setEditTarget] = useState<{
         type: "article" | "work"
@@ -84,6 +86,10 @@ export default function DashboardClient({ initialArticles, initialWorks, initial
 
     const handleCreateLabel = (label: LabelType) => {
         setLabels((prev) => [...prev, label])
+    }
+
+    const handleCreateTechnologie = (technologie: TechnologieType) => {
+        setTechnologies((prev) => [...prev, technologie])
     }
 
     return (
@@ -215,9 +221,11 @@ export default function DashboardClient({ initialArticles, initialWorks, initial
                     type={editTarget.type}
                     data={editTarget.data}
                     labels={labels}
+                    technologies={technologies}
                     onClose={() => setShowModal(false)}
                     onSave={handleSave}
                     onCreateLabel={handleCreateLabel}
+                    onCreateTechnologie={handleCreateTechnologie}
                 />
             )}
         </div>

@@ -87,13 +87,15 @@ export default function ProfilePage() {
   const handleIconFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files || e.target.files.length === 0) return
 
-    const file = e.target.files[0]
-    const previewUrl = URL.createObjectURL(file)
+    const file = e.target.files[0];
+    const reader = new FileReader();
+  
+    reader.onloadend = () => {
+      const base64Data = reader.result as string; // Base64 形式の画像データ
+      setProfile({ ...profile, icon: base64Data }); // プレビュー用に設定
+    };
 
-    setProfile({
-      ...profile,
-      icon: previewUrl,
-    })
+    reader.readAsDataURL(file);
   }
 
   const updateProfile = async () => {

@@ -3,12 +3,18 @@ export type LabelType = {
     name: string;
 };
 
+export type TechnologieType = {
+    id: number;
+    name: string;
+};
+
 export type ArticleType = {
     id: number;
     title: string;
     date: string;
     content: string;
     labelIds: number[]; // ✅ 記事に紐づくラベルの ID を追加
+    technologieIds: number[];
     authorIds: string[];
 };
 
@@ -20,6 +26,7 @@ export type WorkType = {
     icon: string | null;
     description: string | null;
     labelIds: number[]; // ✅ 作品に紐づくラベルの ID を追加
+    technologieIds: number[];
     authorIds: string[];
 };
 

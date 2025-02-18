@@ -4,13 +4,14 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { WorkType, UserType, LabelType } from "../../types";
+import { WorkType, UserType, LabelType, TechnologieType } from "../../types";
 import Image from "next/image";
 
 export default function WorkList() {
   const [works, setWorks] = useState<WorkType[]>([]);
   const [users, setUsers] = useState<{ [key: string]: UserType }>({});
   const [labels, setLabels] = useState<{ [key: number]: LabelType }>({});
+  const [technologies, setTechnologies] = useState<{ [key: number]: TechnologieType }>({});
   const [selectedWork, setSelectedWork] = useState<WorkType | null>(null);
   const [selectedUser, setSelectedUser] = useState<UserType | null>(null);
 
@@ -40,6 +41,15 @@ export default function WorkList() {
           const labelsData: UserType[] = await labelsRes.json();
           setLabels(Object.fromEntries(labelsData.map(label => [label.id, label])));
         }
+
+        // ✅ `worksData` から `authorIds` を取得し、重複を削除
+        const technologieIds = Array.from(new Set(worksData.flatMap(work => work.technologieIds)));
+
+        if (technologieIds.length > 0) {
+          const technologiesRes = await fetch(`/api/technologies?ids=${technologieIds.join(",")}`);
+          const technologiesData: UserType[] = await technologiesRes.json();
+          setTechnologies(Object.fromEntries(technologiesData.map(technologie => [technologie.id, technologie])));
+        }
       } catch (error) {
         console.error("データの取得に失敗しました", error);
       }
@@ -67,6 +77,11 @@ export default function WorkList() {
                   {(work.labelIds ?? []).map((labelId) => (
                     <span key={labelId} className="bg-blue-100 text-blue-600 px-2 py-1 rounded text-xs mr-2">
                       {labels[labelId]?.name}
+                    </span>
+                  ))}
+                  {(work.technologieIds ?? []).map((technologieId) => (
+                    <span key={technologieId} className="bg-blue-100 text-blue-600 px-2 py-1 rounded text-xs mr-2">
+                      {technologies[technologieId]?.name}
                     </span>
                   ))}
                 </div>
@@ -102,6 +117,11 @@ export default function WorkList() {
                     {labels[labelId]?.name}
                   </span>
                 ))}
+                {(work.technologieIds ?? []).map((technologieId) => (
+                    <span key={technologieId} className="bg-blue-100 text-blue-600 px-2 py-1 rounded text-xs mr-2">
+                      {technologies[technologieId]?.name}
+                    </span>
+                  ))}
               </div>
 
               <p className="text-sm text-gray-500">{work.date}</p>
@@ -142,6 +162,11 @@ export default function WorkList() {
                 {(selectedWork.labelIds ?? []).map(labelId => (
                   <span key={labelId} className="bg-blue-100 text-blue-600 px-2 py-1 rounded text-xs mr-2">
                     {labels[labelId]?.name}
+                  </span>
+                ))}
+                {(selectedWork.technologieIds ?? []).map(technologieId => (
+                  <span key={technologieId} className="bg-blue-100 text-blue-600 px-2 py-1 rounded text-xs mr-2">
+                    {technologies[technologieId]?.name}
                   </span>
                 ))}
               </div>

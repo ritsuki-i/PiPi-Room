@@ -37,6 +37,12 @@ export const labels = pgTable("labels", {
   name: varchar("name", { length: 255 }).unique().notNull(),
 });
 
+// technologies テーブル
+export const technologies = pgTable("technologies", {
+  id: bigserial("id", { mode: "number" }).primaryKey(),
+  name: varchar("name", { length: 255 }).unique().notNull(),
+});
+
 // user_articles（ユーザーと記事の中間テーブル）
 export const userArticles = pgTable("user_articles", {
   userId: varchar("user_id", { length: 255 }).references(() => users.id, { onDelete: "cascade" }),
@@ -66,6 +72,17 @@ export const articleLabels = pgTable("article_labels", {
     .notNull(),
 });
 
+// article_technologies（記事と使用技術の中間テーブル）
+export const articleTechnologies = pgTable("article_technologies", {
+  articleId: bigint("article_id", { mode: "number" })
+    .references(() => articles.id, { onDelete: "cascade" })
+    .notNull(),
+
+  technologieId: bigint("technologie_id", { mode: "number" })
+    .references(() => technologies.id, { onDelete: "cascade" })
+    .notNull(),
+});
+
 // work_labels（アプリとラベルの中間テーブル）
 export const workLabels = pgTable("work_labels", {
   workId: bigint("work_id", { mode: "number" })
@@ -74,6 +91,17 @@ export const workLabels = pgTable("work_labels", {
 
   labelId: bigint("label_id", { mode: "number" })
     .references(() => labels.id, { onDelete: "cascade" })
+    .notNull(),
+});
+
+// work_technologies（アプリとラベルの中間テーブル）
+export const workTechnologies = pgTable("work_technologies", {
+  workId: bigint("work_id", { mode: "number" })
+    .references(() => works.id, { onDelete: "cascade" })
+    .notNull(),
+
+  technologieId: bigint("technologie_id", { mode: "number" })
+    .references(() => technologies.id, { onDelete: "cascade" })
     .notNull(),
 });
 

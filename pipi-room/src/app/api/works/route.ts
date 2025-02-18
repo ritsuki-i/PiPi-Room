@@ -1,7 +1,7 @@
 // app/api/works/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
-import { works, userWorks, workLabels } from "@/db/schema";
+import { works, userWorks, workLabels, workTechnologies } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { getAuth } from "@clerk/nextjs/server";
 import { WorkType } from "@/types";
@@ -20,6 +20,7 @@ export async function POST(req: NextRequest) {
         icon,
         description,
         labelIds,
+        technologieIds,
         authorIds,
     } = (await req.json()) as {
         name: string;
@@ -28,6 +29,7 @@ export async function POST(req: NextRequest) {
         icon?: string;
         description?: string;
         labelIds: number[];
+        technologieIds: number[];
         authorIds: string[];
     };
 
@@ -62,6 +64,16 @@ export async function POST(req: NextRequest) {
         );
     }
 
+    // ③ workTechnologies テーブルに、各ラベル (technologieIds) と新規作品 (newWork.id) を紐付け
+    if (technologieIds?.length) {
+        await db.insert(workTechnologies).values(
+            technologieIds.map((technologieId: number) => ({
+                workId: newWork.id,
+                technologieId,
+            }))
+        );
+    }
+
     return NextResponse.json(newWork);
 }
 
@@ -78,10 +90,12 @@ export async function GET() {
             description: works.description,
             authorId: userWorks.userId, // ✅ 各 `workId` に紐づく `userId`
             labelId: workLabels.labelId, // ✅ 各 `workId` に紐づく `labelId`
+            technologieId: workTechnologies.technologieId, // ✅ 各 `workId` に紐づく `technologieId`
         })
         .from(works)
         .leftJoin(userWorks, eq(works.id, userWorks.workId))
-        .leftJoin(workLabels, eq(works.id, workLabels.workId));
+        .leftJoin(workLabels, eq(works.id, workLabels.workId))
+        .leftJoin(workTechnologies, eq(works.id, workTechnologies.workId));
 
     // ✅ `workId` ごとに `authorIds` をグループ化
     const groupedWorks: WorkType[] = Object.values(
@@ -96,6 +110,7 @@ export async function GET() {
                     description: work.description,
                     authorIds: [], // ✅ `authorIds` を配列にする
                     labelIds: [], // ✅ `labelIds` を配列にする
+                    technologieIds: [], // ✅ `technologieIds` を配列にする
                 };
             }
             if (work.authorId && !acc[work.workId].authorIds.includes(work.authorId)) {
@@ -103,6 +118,9 @@ export async function GET() {
             }
             if (work.labelId && !acc[work.workId].labelIds.includes(work.labelId)) {
                 acc[work.workId].labelIds.push(work.labelId);
+            }
+            if (work.technologieId && !acc[work.workId].technologieIds.includes(work.technologieId)) {
+                acc[work.workId].technologieIds.push(work.technologieId);
             }
             return acc;
         }, {} as Record<number, WorkType>)

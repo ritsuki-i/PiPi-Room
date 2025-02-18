@@ -9,25 +9,29 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
-import type { ArticleType, WorkType, LabelType } from "@/types"
+import type { ArticleType, WorkType, LabelType, TechnologieType } from "@/types"
 import Image from "next/image"
 
 interface CreateOrEditModalProps {
   type: "article" | "work"
   data: ArticleType | WorkType | null
   labels: LabelType[]
+  technologies: TechnologieType[]
   onClose: () => void
   onSave: (type: "article" | "work", data: ArticleType | WorkType, isEdit: boolean) => void
   onCreateLabel: (label: LabelType) => void
+  onCreateTechnologie: (technologie: TechnologieType) => void
 }
 
 export default function CreateOrEditModal({
   type,
   data,
   labels,
+  technologies,
   onClose,
   onSave,
   onCreateLabel,
+  onCreateTechnologie
 }: CreateOrEditModalProps) {
   const [formData, setFormData] = useState<ArticleType | WorkType>(
     data ||
@@ -38,6 +42,7 @@ export default function CreateOrEditModal({
         date: "",
         content: "",
         labelIds: [],
+        technologieIds: [],
         authorIds: [],
       } as ArticleType)
       : ({
@@ -48,12 +53,15 @@ export default function CreateOrEditModal({
         icon: "",
         description: "",
         labelIds: [],
+        technologieIds: [],
         authorIds: [],
       } as WorkType)),
   )
 
   const [selectedLabelIds, setSelectedLabelIds] = useState<number[]>(data?.labelIds || [])
   const [newLabelName, setNewLabelName] = useState("")
+  const [selectedTechnologieIds, setSelectedTechnologieIds] = useState<number[]>(data?.labelIds || [])
+  const [newTechnologieName, setNewTechnologieName] = useState("")
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [imagePreview, setImagePreview] = useState<string | null>(null)
 
@@ -85,12 +93,25 @@ export default function CreateOrEditModal({
     setSelectedLabelIds((prev) => (prev.includes(labelId) ? prev.filter((id) => id !== labelId) : [...prev, labelId]))
   }
 
+  const handleTechnologieToggle = (technologieId: number) => {
+    setSelectedTechnologieIds((prev) => (prev.includes(technologieId) ? prev.filter((id) => id !== technologieId) : [...prev, technologieId]))
+  }
+
   const handleCreateLabel = () => {
     if (newLabelName.trim()) {
       const newLabel: LabelType = { id: Date.now(), name: newLabelName.trim() }
       onCreateLabel(newLabel)
       setSelectedLabelIds([...selectedLabelIds, newLabel.id])
       setNewLabelName("")
+    }
+  }
+
+  const handleCreateTechnologie = () => {
+    if (newTechnologieName.trim()) {
+      const newTechnologie: TechnologieType = { id: Date.now(), name: newTechnologieName.trim() }
+      onCreateTechnologie(newTechnologie)
+      setSelectedTechnologieIds([...selectedTechnologieIds, newTechnologie.id])
+      setNewTechnologieName("")
     }
   }
 
@@ -140,6 +161,35 @@ export default function CreateOrEditModal({
       }
     }
 
+    // 1. まだDBに無いラベルを一括作成
+    //    ここでは「id が 1兆 (Date.now() など) 以上なら未登録」とみなす例
+    const newTechnologieIds = selectedTechnologieIds.filter((id) => id >= 1_000_000_000_000);
+    const existingTechnologieIds = selectedTechnologieIds.filter((id) => id < 1_000_000_000_000);
+
+    const finalTechnologieIds = [...existingTechnologieIds];
+
+    // 2. 未登録ラベルは /api/technologies にPOSTして本物のIDを取得
+    for (const tempId of newTechnologieIds) {
+      // ラベル配列からラベル名を取得
+      const technologieObj = technologies.find((lbl) => lbl.id === tempId);
+      if (!technologieObj) continue;
+
+      try {
+        const res = await fetch("/api/technologies", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name: technologieObj.name }),
+        });
+        if (!res.ok) throw new Error("ラベル作成に失敗");
+
+        const createdTechnologie = await res.json();
+        // createdTechnologie.id => DBで発行された本物のID
+        finalTechnologieIds.push(createdTechnologie.id);
+      } catch (error) {
+        console.error(error);
+      }
+    }
+
     // 3. 記事/作品を保存
     const endpoint = type === "article" ? "/api/articles" : "/api/works";
     const method = data ? "PATCH" : "POST";
@@ -153,6 +203,7 @@ export default function CreateOrEditModal({
         body: JSON.stringify({
           ...formData,
           labelIds: finalLabelIds, // ここで本物のラベルIDを渡す
+          technologieIds: finalTechnologieIds,
         }),
       });
 
@@ -324,7 +375,7 @@ export default function CreateOrEditModal({
                         src={imagePreview || "/placeholder.svg"}
                         alt="Preview"
                         width={128}
-                        height={128} 
+                        height={128}
                         className="max-w-full h-auto max-h-32 object-contain"
                       />
                     </div>
@@ -335,7 +386,7 @@ export default function CreateOrEditModal({
           )}
 
           <div className="grid grid-cols-4 items-start gap-4">
-            <Label className="text-right">ラベル</Label>
+            <Label className="text-right">カテゴリ</Label>
             <div className="col-span-3 space-y-2">
               {labels.map((label) => (
                 <div key={label.id} className="flex items-center space-x-2">
@@ -351,7 +402,7 @@ export default function CreateOrEditModal({
                 <Input
                   value={newLabelName}
                   onChange={(e) => setNewLabelName(e.target.value)}
-                  placeholder="新規ラベル"
+                  placeholder="新規カテゴリ"
                   className="flex-grow"
                 />
                 <Button onClick={handleCreateLabel} size="sm">
@@ -362,23 +413,50 @@ export default function CreateOrEditModal({
           </div>
         </div>
 
-        <div className="flex justify-end space-x-2">
-          <Button variant="outline" onClick={onClose}>
-            キャンセル
-          </Button>
-          {data && (
-            <Button variant="destructive" onClick={handleDelete}>
-              <Trash className="mr-2 h-4 w-4" />
-              削除
-            </Button>
-          )}
-          <Button onClick={handleSubmit}>
-            <Save className="mr-2 h-4 w-4" />
-            保存
-          </Button>
+        <div className="grid grid-cols-4 items-start gap-4">
+          <Label className="text-right">使用技術</Label>
+          <div className="col-span-3 space-y-2">
+            {technologies.map((technologie) => (
+              <div key={technologie.id} className="flex items-center space-x-2">
+                <Checkbox
+                  id={`technologie-${technologie.id}`}
+                  checked={selectedTechnologieIds.includes(technologie.id)}
+                  onCheckedChange={() => handleTechnologieToggle(technologie.id)}
+                />
+                <Label htmlFor={`technologie-${technologie.id}`}>{technologie.name}</Label>
+              </div>
+            ))}
+            <div className="flex items-center space-x-2 mt-2">
+              <Input
+                value={newTechnologieName}
+                onChange={(e) => setNewTechnologieName(e.target.value)}
+                placeholder="新規ラベル"
+                className="flex-grow"
+              />
+              <Button onClick={handleCreateTechnologie} size="sm">
+                <Plus className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
         </div>
-      </DialogContent>
-    </Dialog>
+
+      <div className="flex justify-end space-x-2">
+        <Button variant="outline" onClick={onClose}>
+          キャンセル
+        </Button>
+        {data && (
+          <Button variant="destructive" onClick={handleDelete}>
+            <Trash className="mr-2 h-4 w-4" />
+            削除
+          </Button>
+        )}
+        <Button onClick={handleSubmit}>
+          <Save className="mr-2 h-4 w-4" />
+          保存
+        </Button>
+      </div>
+    </DialogContent>
+    </Dialog >
   )
 }
 

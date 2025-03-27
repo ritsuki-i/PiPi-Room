@@ -26,16 +26,12 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(insertedTechnologie);
 }
 
-export async function GET(req: NextRequest) {
-    const url = new URL(req.url);
-    const idsParam = url.searchParams.get("ids");
-  
-    if (!idsParam) return NextResponse.json({ error: "No user IDs provided" }, { status: 400 });
-  
-    const technologieIds = idsParam.split(",").map(id => Number(id.trim()));
-  
-    // ✅ `labelIds` に一致するラベルを取得
-    const technologieData = await db.select().from(technologies).where(inArray(technologies.id, technologieIds));
-  
-    return NextResponse.json(technologieData);
-  }
+export async function GET() {
+    try {
+        const allTechnologies = await db.select().from(technologies)
+        return NextResponse.json(allTechnologies) // 👈 クライアントでは配列として受け取れる
+    } catch (err) {
+        console.error("ラベル取得失敗:", err)
+        return NextResponse.json({ error: "取得失敗" }, { status: 500 })
+    }
+}

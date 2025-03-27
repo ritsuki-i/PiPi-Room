@@ -17,6 +17,7 @@ export async function POST(req: NextRequest) {
     title,
     date,
     content,
+    type,
     labelIds,
     technologieIds,
     authorIds,
@@ -24,6 +25,7 @@ export async function POST(req: NextRequest) {
     title: string;
     date: string;
     content?: string;
+    type: string;
     labelIds: number[];
     technologieIds: [];
     authorIds: string[];
@@ -35,7 +37,7 @@ export async function POST(req: NextRequest) {
   // ① Articles テーブルに新規作品を挿入
   const [newarticle] = await db
     .insert(articles)
-    .values({ title, date, content: content ?? "" })
+    .values({ title, date, content: content ?? "", type })
     .returning();
 
   // ② authorIds にログイン中の userId を追加（重複を防ぐ）
@@ -82,6 +84,7 @@ export async function GET() {
       title: articles.title,
       date: articles.date,
       content: articles.content,
+      type: articles.type,
       authorId: userArticles.userId, // ✅ 各 `articleId` に紐づく `userId`
       labelId: articleLabels.labelId, // ✅ 各 `articleId` に紐づく `labelId`
       technologieId: articleTechnologies.technologieId, // ✅ 各 `articleId` に紐づく `technologieId`
@@ -100,6 +103,7 @@ export async function GET() {
           title: article.title,
           date: article.date,
           content: article.content,
+          type: article.type,
           authorIds: [], // ✅ `authorIds` を配列にする
           labelIds: [], // ✅ `labelIds` を配列にする
           technologieIds: [], // ✅ `technologiesIds` を配列にする

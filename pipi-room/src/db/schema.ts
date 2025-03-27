@@ -1,27 +1,30 @@
-import { pgTable, varchar, text, date, timestamp, integer, bigserial, bigint } from "drizzle-orm/pg-core";
+import { pgTable, varchar, text, timestamp, integer, boolean, date, bigserial, bigint, serial } from "drizzle-orm/pg-core";
 
-// users テーブル
+// ユーザー情報
 export const users = pgTable("users", {
   id: varchar("id", { length: 255 }).primaryKey(),
   name: varchar("name", { length: 255 }).notNull(),
-  accountName: varchar("account_name", { length: 255 }).unique().notNull(),
+  accountName: varchar("account_name", { length: 255 }).notNull().unique(),
   icon: text("icon"),
   email: varchar("email", { length: 255 }),
-  birthDate: date("birth_date"),
+  enrollmentYear: bigserial("enrollment_year", { mode: "number" }),
   bio: text("bio"),
+  portfolioUrl: text("portfolio_url"),
   githubUrl: text("github_url"),
-  createdAt: timestamp("created_at").defaultNow(),
+  type: varchar("type", { length: 100 }).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
-// articles テーブル
+// 記事情報
 export const articles = pgTable("articles", {
   id: bigserial("id", { mode: "number" }).primaryKey(),
   title: varchar("title", { length: 255 }).notNull(),
   date: date("date").notNull(),
   content: text("content").notNull(),
+  type: varchar("type", { length: 100 }).notNull(),
 });
 
-// works テーブル
+// アプリ情報
 export const works = pgTable("works", {
   id: bigserial("id", { mode: "number" }).primaryKey(),
   name: varchar("name", { length: 255 }).notNull(),
@@ -29,21 +32,23 @@ export const works = pgTable("works", {
   url: text("url"),
   icon: text("icon"),
   description: text("description"),
+  githubUrl: text("github_url"),
+  type: varchar("type", { length: 100 }).notNull(),
 });
 
-// labels テーブル
+// ラベル情報
 export const labels = pgTable("labels", {
   id: bigserial("id", { mode: "number" }).primaryKey(),
   name: varchar("name", { length: 255 }).unique().notNull(),
 });
 
-// technologies テーブル
+// 使用技術情報
 export const technologies = pgTable("technologies", {
   id: bigserial("id", { mode: "number" }).primaryKey(),
   name: varchar("name", { length: 255 }).unique().notNull(),
 });
 
-// user_articles（ユーザーと記事の中間テーブル）
+// ユーザと記事の中間テーブル
 export const userArticles = pgTable("user_articles", {
   userId: varchar("user_id", { length: 255 }).references(() => users.id, { onDelete: "cascade" }),
 
@@ -52,7 +57,7 @@ export const userArticles = pgTable("user_articles", {
     .notNull(),
 });
 
-// user_works（ユーザーとアプリの中間テーブル）
+// ユーザとアプリの中間テーブル
 export const userWorks = pgTable("user_works", {
   userId: varchar("user_id", { length: 255 }).references(() => users.id, { onDelete: "cascade" }),
 
@@ -61,7 +66,7 @@ export const userWorks = pgTable("user_works", {
     .notNull(),
 });
 
-// article_labels（記事とラベルの中間テーブル）
+// 記事とラベルの中間テーブル
 export const articleLabels = pgTable("article_labels", {
   articleId: bigint("article_id", { mode: "number" })
     .references(() => articles.id, { onDelete: "cascade" })
@@ -72,7 +77,7 @@ export const articleLabels = pgTable("article_labels", {
     .notNull(),
 });
 
-// article_technologies（記事と使用技術の中間テーブル）
+// 記事と使用技術の中間テーブル
 export const articleTechnologies = pgTable("article_technologies", {
   articleId: bigint("article_id", { mode: "number" })
     .references(() => articles.id, { onDelete: "cascade" })
@@ -83,7 +88,7 @@ export const articleTechnologies = pgTable("article_technologies", {
     .notNull(),
 });
 
-// work_labels（アプリとラベルの中間テーブル）
+// アプリとラベルの中間テーブル
 export const workLabels = pgTable("work_labels", {
   workId: bigint("work_id", { mode: "number" })
     .references(() => works.id, { onDelete: "cascade" })
@@ -94,7 +99,8 @@ export const workLabels = pgTable("work_labels", {
     .notNull(),
 });
 
-// work_technologies（アプリとラベルの中間テーブル）
+
+// アプリと使用技術の中間テーブル
 export const workTechnologies = pgTable("work_technologies", {
   workId: bigint("work_id", { mode: "number" })
     .references(() => works.id, { onDelete: "cascade" })
@@ -105,9 +111,73 @@ export const workTechnologies = pgTable("work_technologies", {
     .notNull(),
 });
 
-// user_learning_records（ユーザーの学習記録）
+// ユーザーの学習記録
 export const userLearningRecords = pgTable("user_learning_records", {
   userId: varchar("user_id", { length: 255 }).references(() => users.id, { onDelete: "cascade" }),
   date: date("date").notNull(),
   learningHours: integer("learning_hours").notNull(),
+});
+
+// 記事閲覧履歴（最新5件）
+export const articleViewHistory = pgTable("article_view_history", {
+  userId: varchar("user_id", { length: 255 }).references(() => users.id, { onDelete: "cascade" }),
+  articleId: bigint("article_id", { mode: "number" })
+    .references(() => articles.id, { onDelete: "cascade" })
+    .notNull(),
+  viewedAt: timestamp("viewed_at").defaultNow().notNull(),
+});
+
+// 作品閲覧履歴（最新5件）
+export const workViewHistory = pgTable("work_view_history", {
+  userId: varchar("user_id", { length: 255 }).references(() => users.id, { onDelete: "cascade" }),
+  workId: bigint("work_id", { mode: "number" })
+    .references(() => works.id, { onDelete: "cascade" })
+    .notNull(),
+  viewedAt: timestamp("viewed_at").defaultNow().notNull(),
+});
+
+// 記事のコメント
+export const articleComments = pgTable("article_comments", {
+  id: bigserial("id", { mode: "number" }).primaryKey(),
+  ararticleId: bigint("article_id", { mode: "number" })
+    .references(() => articles.id, { onDelete: "cascade" })
+    .notNull(),
+  userId: varchar("user_id", { length: 255 }).references(() => users.id, { onDelete: "cascade" }),
+  content: text("content").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// 作品のコメント
+export const workComments = pgTable("work_comments", {
+  id: bigserial("id", { mode: "number" }).primaryKey(),
+  workId: bigint("work_id", { mode: "number" })
+    .references(() => works.id, { onDelete: "cascade" })
+    .notNull(),
+  userId: varchar("user_id", { length: 255 }).references(() => users.id, { onDelete: "cascade" }),
+  content: text("content").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// 記事の写真
+export const articleImages = pgTable("article_images", {
+  id: bigserial("id", { mode: "number" }).primaryKey(),
+  userId: varchar("user_id", { length: 255 }).references(() => users.id, { onDelete: "cascade" }),
+  articleId: integer("article_id").notNull().references(() => articles.id),
+});
+
+// 通知情報
+export const notifications = pgTable("notifications", {
+  id: bigserial("id", { mode: "number" }).primaryKey(),
+  userId: varchar("user_id", { length: 255 }).references(() => users.id, { onDelete: "cascade" }),
+  content: text("content").notNull(),
+  targetType: varchar("target_type", { length: 50 }).notNull(),
+  targetId: integer("target_id").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  readFlag: boolean("read_flag").default(false).notNull(),
+});
+
+//更新ログ
+export const pingLog = pgTable("ping_log", {
+  id: serial("id").primaryKey(),
+  executedAt: timestamp("executed_at", { withTimezone: true }).defaultNow(),
 });

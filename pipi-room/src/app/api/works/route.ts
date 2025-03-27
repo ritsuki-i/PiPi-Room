@@ -17,20 +17,24 @@ export async function POST(req: NextRequest) {
         name,
         date,
         url,
+        githubUrl,
         icon,
         description,
         labelIds,
         technologieIds,
         authorIds,
+        type
     } = (await req.json()) as {
         name: string;
         date: string;
         url?: string;
+        githubUrl: string,
         icon?: string;
         description?: string;
         labelIds: number[];
         technologieIds: number[];
         authorIds: string[];
+        type: string;
     };
 
     if (!name || !date)
@@ -39,7 +43,7 @@ export async function POST(req: NextRequest) {
     // ① works テーブルに新規作品を挿入
     const [newWork] = await db
         .insert(works)
-        .values({ name, date, url, icon, description })
+        .values({ name, date, url, githubUrl, icon, description, type })
         .returning();
 
     // ② authorIds にログイン中の userId を追加（重複を防ぐ）
@@ -86,8 +90,10 @@ export async function GET() {
             name: works.name,
             date: works.date,
             url: works.url,
+            githubUrl: works.githubUrl,
             icon: works.icon,
             description: works.description,
+            type: works.type,
             authorId: userWorks.userId, // ✅ 各 `workId` に紐づく `userId`
             labelId: workLabels.labelId, // ✅ 各 `workId` に紐づく `labelId`
             technologieId: workTechnologies.technologieId, // ✅ 各 `workId` に紐づく `technologieId`
@@ -106,8 +112,10 @@ export async function GET() {
                     name: work.name,
                     date: work.date,
                     url: work.url,
+                    githubUrl: work.githubUrl,
                     icon: work.icon,
                     description: work.description,
+                    type: work.type,
                     authorIds: [], // ✅ `authorIds` を配列にする
                     labelIds: [], // ✅ `labelIds` を配列にする
                     technologieIds: [], // ✅ `technologieIds` を配列にする

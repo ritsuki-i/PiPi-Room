@@ -32,9 +32,11 @@ export async function PATCH(req: NextRequest) {
     accountName,
     icon,
     email,
-    birthDate,
+    enrollmentYear,
     bio,
+    portfolioUrl,
     githubUrl,
+    type
   } = await req.json();
 
   await db.update(users)
@@ -43,9 +45,11 @@ export async function PATCH(req: NextRequest) {
       accountName,
       icon,
       email,
-      birthDate, // 文字列の場合 DATE型のカラムに合う形か要確認
+      enrollmentYear,
       bio,
+      portfolioUrl,
       githubUrl,
+      type
     })
     .where(eq(users.id, userId));
 

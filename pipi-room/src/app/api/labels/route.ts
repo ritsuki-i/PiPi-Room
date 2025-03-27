@@ -26,16 +26,12 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(insertedLabel);
 }
 
-export async function GET(req: NextRequest) {
-    const url = new URL(req.url);
-    const idsParam = url.searchParams.get("ids");
-  
-    if (!idsParam) return NextResponse.json({ error: "No user IDs provided" }, { status: 400 });
-  
-    const labelIds = idsParam.split(",").map(id => Number(id.trim()));
-  
-    // ✅ `labelIds` に一致するラベルを取得
-    const labelData = await db.select().from(labels).where(inArray(labels.id, labelIds));
-  
-    return NextResponse.json(labelData);
-  }
+export async function GET() {
+    try {
+        const allLabels = await db.select().from(labels)
+        return NextResponse.json(allLabels) // 👈 クライアントでは配列として受け取れる
+    } catch (err) {
+        console.error("ラベル取得失敗:", err)
+        return NextResponse.json({ error: "取得失敗" }, { status: 500 })
+    }
+}

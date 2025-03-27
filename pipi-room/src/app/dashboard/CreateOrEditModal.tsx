@@ -9,6 +9,17 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 import type { ArticleType, WorkType, LabelType, TechnologieType } from "@/types"
 import Image from "next/image"
 
@@ -18,7 +29,7 @@ interface CreateOrEditModalProps {
   labels: LabelType[]
   technologies: TechnologieType[]
   onClose: () => void
-  onSave: (type: "article" | "work", data: ArticleType | WorkType, isEdit: boolean) => void
+  onSave: (type: "article" | "work", data: ArticleType | WorkType, mode: "create" | "edit" | "delete") => void
   onCreateLabel: (label: LabelType) => void
   onCreateTechnologie: (technologie: TechnologieType) => void
 }
@@ -39,31 +50,37 @@ export default function CreateOrEditModal({
       ? ({
         id: 0,
         title: "",
-        date: "",
+        date: new Date().toISOString(),
         content: "",
         labelIds: [],
         technologieIds: [],
         authorIds: [],
+        type: "Public",
       } as ArticleType)
       : ({
         id: 0,
         name: "",
-        date: "",
+        date: new Date().toISOString(),
         url: "",
+        githubUrl: "",
         icon: "",
         description: "",
         labelIds: [],
         technologieIds: [],
         authorIds: [],
+        type: "Public",
       } as WorkType)),
   )
 
+  const [localLabels, setLocalLabels] = useState<LabelType[]>(labels)
   const [selectedLabelIds, setSelectedLabelIds] = useState<number[]>(data?.labelIds || [])
   const [newLabelName, setNewLabelName] = useState("")
-  const [selectedTechnologieIds, setSelectedTechnologieIds] = useState<number[]>(data?.labelIds || [])
+  const [selectedTechnologieIds, setSelectedTechnologieIds] = useState<number[]>(data?.technologieIds || [])
   const [newTechnologieName, setNewTechnologieName] = useState("")
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [imagePreview, setImagePreview] = useState<string | null>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     if (data && "icon" in data && data.icon) {
@@ -71,7 +88,7 @@ export default function CreateOrEditModal({
     }
   }, [data])
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target
     setFormData({ ...formData, [name]: value })
     setErrors({ ...errors, [name]: "" })
@@ -100,16 +117,21 @@ export default function CreateOrEditModal({
   const handleCreateLabel = () => {
     if (newLabelName.trim()) {
       const newLabel: LabelType = { id: Date.now(), name: newLabelName.trim() }
+      setLocalLabels([...localLabels, newLabel]) // stateに追加
       onCreateLabel(newLabel)
+      // 追加: 作成したラベルを `labels` にも即反映
+      labels.push(newLabel)
       setSelectedLabelIds([...selectedLabelIds, newLabel.id])
       setNewLabelName("")
     }
   }
 
+
   const handleCreateTechnologie = () => {
     if (newTechnologieName.trim()) {
       const newTechnologie: TechnologieType = { id: Date.now(), name: newTechnologieName.trim() }
       onCreateTechnologie(newTechnologie)
+      technologies.push(newTechnologie)
       setSelectedTechnologieIds([...selectedTechnologieIds, newTechnologie.id])
       setNewTechnologieName("")
     }
@@ -135,9 +157,10 @@ export default function CreateOrEditModal({
     // 1. まだDBに無いラベルを一括作成
     //    ここでは「id が 1兆 (Date.now() など) 以上なら未登録」とみなす例
     const newLabelIds = selectedLabelIds.filter((id) => id >= 1_000_000_000_000);
-    const existingLabelIds = selectedLabelIds.filter((id) => id < 1_000_000_000_000);
 
-    const finalLabelIds = [...existingLabelIds];
+    const finalLabelIds = selectedLabelIds.filter(id =>
+      labels.some(label => label.id === id)
+    );
 
     // 2. 未登録ラベルは /api/labels にPOSTして本物のIDを取得
     for (const tempId of newLabelIds) {
@@ -164,9 +187,10 @@ export default function CreateOrEditModal({
     // 1. まだDBに無いラベルを一括作成
     //    ここでは「id が 1兆 (Date.now() など) 以上なら未登録」とみなす例
     const newTechnologieIds = selectedTechnologieIds.filter((id) => id >= 1_000_000_000_000);
-    const existingTechnologieIds = selectedTechnologieIds.filter((id) => id < 1_000_000_000_000);
 
-    const finalTechnologieIds = [...existingTechnologieIds];
+    const finalTechnologieIds = selectedTechnologieIds.filter(id =>
+      technologies.some(tech => tech.id === id)
+    );
 
     // 2. 未登録ラベルは /api/technologies にPOSTして本物のIDを取得
     for (const tempId of newTechnologieIds) {
@@ -212,7 +236,7 @@ export default function CreateOrEditModal({
       }
 
       const result = await res.json();
-      onSave(type, result, !!data);
+      onSave(type, result, data ? "edit" : "create")
       onClose();
     } catch (error) {
       console.error("保存に失敗しました:", error);
@@ -220,33 +244,38 @@ export default function CreateOrEditModal({
   };
 
   const handleDelete = async () => {
-    if (!data) return; // そもそも新規作成時は削除不可
-    if (!confirm("本当に削除しますか？")) return;
+    if (!data) return
 
-    const endpoint = type === "article" ? "/api/articles" : "/api/works";
-    const url = `${endpoint}/${data.id}`;
+    setIsDeleting(true)
+    setError(null)
+
+    const endpoint = type === "article" ? "/api/articles" : "/api/works"
+    const url = `${endpoint}/${data.id}`
 
     try {
       const res = await fetch(url, {
         method: "DELETE",
-      });
+      })
+
       if (!res.ok) {
-        throw new Error("削除に失敗しました");
+        throw new Error("削除に失敗しました")
       }
-      // 削除完了したら、モーダルを閉じるなど
-      onClose();
-      // 必要に応じて onSave() や リスト再読み込みの処理を呼ぶ場合もある
+      onSave(type, data, "delete")
+
+      onClose()
+
     } catch (error) {
-      console.error("削除エラー:", error);
+      console.error("削除エラー:", error)
+      setError(error instanceof Error ? error.message : "削除中にエラーが発生しました")
+    } finally {
+      setIsDeleting(false)
     }
-  };
-
-
+  }
 
 
   return (
     <Dialog open={true} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[425px] max-h-[80vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
             {data ? "編集" : "新規作成"}: {type === "article" ? "記事" : "作品"}
@@ -269,20 +298,6 @@ export default function CreateOrEditModal({
                 {errors.title && <p className="text-red-500 text-sm col-start-2 col-span-3">{errors.title}</p>}
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="date" className="text-right">
-                  日付
-                </Label>
-                <Input
-                  id="date"
-                  name="date"
-                  type="date"
-                  value={(formData as ArticleType).date}
-                  onChange={handleChange}
-                  className="col-span-3"
-                />
-                {errors.date && <p className="text-red-500 text-sm col-start-2 col-span-3">{errors.date}</p>}
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="content" className="text-right">
                   内容
                 </Label>
@@ -295,6 +310,24 @@ export default function CreateOrEditModal({
                   rows={5}
                 />
                 {errors.content && <p className="text-red-500 text-sm col-start-2 col-span-3">{errors.content}</p>}
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="type" className="text-right">
+                  タイプ
+                </Label>
+                <select
+                  id="type"
+                  name="type"
+                  value={(formData as WorkType).type ?? "Public"}
+                  onChange={handleChange}
+                  className="col-span-3 border rounded px-3 py-2"
+                >
+                  <option value="Public">Public</option>
+                  <option value="Private">Private</option>
+                </select>
+                <p className="text-xs text-gray-500 col-start-2 col-span-3">
+                  ※誰でも閲覧可能またはメンバーのみ閲覧可能か選ぶことができます。
+                </p>
               </div>
             </>
           ) : (
@@ -313,20 +346,6 @@ export default function CreateOrEditModal({
                 {errors.name && <p className="text-red-500 text-sm col-start-2 col-span-3">{errors.name}</p>}
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="date" className="text-right">
-                  日付
-                </Label>
-                <Input
-                  id="date"
-                  name="date"
-                  type="date"
-                  value={(formData as WorkType).date}
-                  onChange={handleChange}
-                  className="col-span-3"
-                />
-                {errors.date && <p className="text-red-500 text-sm col-start-2 col-span-3">{errors.date}</p>}
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="url" className="text-right">
                   URL
                 </Label>
@@ -334,6 +353,18 @@ export default function CreateOrEditModal({
                   id="url"
                   name="url"
                   value={(formData as WorkType).url ?? ""}
+                  onChange={handleChange}
+                  className="col-span-3"
+                />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="githubUrl" className="text-right">
+                  GitHub URL
+                </Label>
+                <Input
+                  id="githubUrl"
+                  name="githubUrl"
+                  value={(formData as WorkType).githubUrl ?? ""}
                   onChange={handleChange}
                   className="col-span-3"
                 />
@@ -381,6 +412,24 @@ export default function CreateOrEditModal({
                     </div>
                   )}
                 </div>
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="type" className="text-right">
+                  タイプ
+                </Label>
+                <select
+                  id="type"
+                  name="type"
+                  value={(formData as WorkType).type ?? "Public"}
+                  onChange={handleChange}
+                  className="col-span-3 border rounded px-3 py-2"
+                >
+                  <option value="Public">Public</option>
+                  <option value="Private">Private</option>
+                </select>
+                <p className="text-xs text-gray-500 col-start-2 col-span-3">
+                  ※誰でも閲覧可能またはメンバーのみ閲覧可能か選ぶことができます。
+                </p>
               </div>
             </>
           )}
@@ -440,22 +489,57 @@ export default function CreateOrEditModal({
           </div>
         </div>
 
-      <div className="flex justify-end space-x-2">
-        <Button variant="outline" onClick={onClose}>
-          キャンセル
-        </Button>
-        {data && (
-          <Button variant="destructive" onClick={handleDelete}>
-            <Trash className="mr-2 h-4 w-4" />
-            削除
+        <div className="flex justify-end space-x-2">
+          <Button variant="outline" onClick={onClose}>
+            キャンセル
           </Button>
-        )}
-        <Button onClick={handleSubmit}>
-          <Save className="mr-2 h-4 w-4" />
-          保存
-        </Button>
-      </div>
-    </DialogContent>
+          {data && (
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="destructive">
+                  <Trash className="mr-2 h-4 w-4" />
+                  削除
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>本当に削除しますか？</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    この操作は取り消せません。{type === "article" ? "記事" : "作品"}
+                    を削除すると、関連するすべてのデータが完全に削除されます。
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+
+                {error && <div className="bg-red-50 text-red-700 p-3 rounded-md text-sm mb-4">{error}</div>}
+
+                <AlertDialogFooter>
+                  <AlertDialogCancel disabled={isDeleting}>キャンセル</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={(e) => {
+                      e.preventDefault() // デフォルトの閉じる動作を防止
+                      handleDelete()
+                    }}
+                    disabled={isDeleting}
+                    className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
+                  >
+                    {isDeleting ? (
+                      <>
+                        <span className="animate-pulse">削除中...</span>
+                      </>
+                    ) : (
+                      "削除する"
+                    )}
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          )}
+          <Button onClick={handleSubmit}>
+            <Save className="mr-2 h-4 w-4" />
+            保存
+          </Button>
+        </div>
+      </DialogContent>
     </Dialog >
   )
 }

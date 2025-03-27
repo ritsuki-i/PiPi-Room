@@ -3,11 +3,12 @@
 import type React from "react"
 import { useUser } from "@clerk/nextjs"
 import { useState, useEffect } from "react"
-import { Upload } from "lucide-react"
+import { User, AtSign, FileText, Github, Upload, X, GraduationCap, Globe, Mail, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
+import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useRouter } from "next/navigation";
@@ -21,10 +22,34 @@ export default function ProfilePage() {
     accountName: "",
     icon: "",
     email: "",
-    birthDate: "",
+    enrollmentYear: "",
     bio: "",
+    portfolioUrl: "",
     githubUrl: "",
+    type: ""
   })
+
+  const currentYear = new Date().getFullYear();
+  const maxYear = currentYear + 1;
+
+  const RoleBadge = ({ role }: { role: string | null }) => {
+    // Define styling for each role type
+    const badgeStyles = {
+      admin: "bg-red-100 text-red-800 hover:bg-red-100 border-red-200",
+      manager: "bg-amber-100 text-amber-800 hover:bg-amber-100 border-amber-200",
+      member: "bg-blue-100 text-blue-800 hover:bg-blue-100 border-blue-200",
+      general: "bg-gray-100 text-gray-800 hover:bg-gray-100 border-gray-200",
+    }
+
+    // Get the appropriate style or default to general if role doesn't match
+    const style = badgeStyles[role as keyof typeof badgeStyles] || badgeStyles.general
+
+    return (
+      <Badge variant="outline" className={`font-medium ${style}`}>
+        {role}
+      </Badge>
+    )
+  }
 
   useEffect(() => {
     if (!user?.id) return
@@ -57,9 +82,11 @@ export default function ProfilePage() {
           accountName: data.accountName || "",
           icon: data.icon || "",
           email: data.email || "",
-          birthDate: data.birthDate || "",
+          enrollmentYear: data.enrollmentYear || "",
           bio: data.bio || "",
+          portfolioUrl: data.portfolioUrl || "",
           githubUrl: data.githubUrl || "",
+          type: data.type || "",
         })
       } catch (error) {
         console.error("エラーが発生しました:", error)
@@ -89,7 +116,7 @@ export default function ProfilePage() {
 
     const file = e.target.files[0];
     const reader = new FileReader();
-  
+
     reader.onloadend = () => {
       const base64Data = reader.result as string; // Base64 形式の画像データ
       setProfile({ ...profile, icon: base64Data }); // プレビュー用に設定
@@ -123,13 +150,28 @@ export default function ProfilePage() {
   }
 
   if (loading) {
-    return <div className="flex justify-center items-center h-screen">読み込み中...</div>
+    return (
+      <Card className="w-full max-w-md mx-auto mt-[50px] border-blue-200">
+        <CardContent className="pt-6 flex flex-col items-center gap-4">
+          <Loader2 className="h-12 w-12 text-blue-500 animate-spin" />
+          <h2 className="text-xl font-semibold text-center">データを取得中...</h2>
+          <p className="text-muted-foreground text-center">しばらくお待ちください</p>
+        </CardContent>
+      </Card>
+    )
   }
 
   return (
     <div className="container mx-auto p-4">
       <Card className="w-full max-w-2xl mx-auto">
         <CardHeader>
+          <div className="flex mb-3">
+            <div className="flex items-center gap-1.5 text-sm font-medium mr-4">
+              <User className="h-4 w-4 text-muted-foreground" />
+              <span>現在の権限</span>
+            </div>
+            <RoleBadge role={profile.type} />
+          </div>
           <CardTitle className="text-2xl font-bold">プロフィール編集</CardTitle>
         </CardHeader>
         <CardContent>
@@ -156,59 +198,114 @@ export default function ProfilePage() {
 
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="name">名前（表示名）</Label>
-                <Input id="name" name="name" value={profile.name} onChange={handleChange} placeholder="名前" />
+                <Label htmlFor="name">名前<span className="text-red-500 ml-1">*</span></Label>
+                <div className="relative">
+                  <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                  <Input
+                    id="name"
+                    name="name"
+                    value={profile.name}
+                    onChange={handleChange}
+                    placeholder="名前"
+                    className="pl-10"
+                    required
+                  />
+                </div>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="accountName">アカウント名</Label>
-                <Input
-                  id="accountName"
-                  name="accountName"
-                  value={profile.accountName}
-                  onChange={handleChange}
-                  placeholder="アカウント名"
-                />
+                <Label htmlFor="accountName">アカウント名<span className="text-red-500 ml-1">*</span></Label>
+                <div className="relative">
+                  <AtSign className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                  <Input
+                    id="accountName"
+                    name="accountName"
+                    value={profile.accountName}
+                    onChange={handleChange}
+                    placeholder="アカウント名"
+                    className="pl-10"
+                    required
+                  />
+                </div>
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="email">メールアドレス</Label>
-                <Input
-                  id="email"
-                  name="email"
-                  type="email"
-                  value={profile.email}
-                  onChange={handleChange}
-                  placeholder="メールアドレス"
-                />
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                  <Input
+                    id="email"
+                    name="email"
+                    type="email"
+                    value={profile.email}
+                    onChange={handleChange}
+                    placeholder="メールアドレス"
+                    className="pl-10"
+                  />
+                </div>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="birthDate">生年月日</Label>
-                <Input id="birthDate" name="birthDate" type="date" value={profile.birthDate} onChange={handleChange} />
+                <Label htmlFor="enrollmentYear">大学入学年<span className="text-red-500 ml-1">*</span></Label>
+                <div className="relative">
+                  <GraduationCap className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                  <Input
+                    id="enrollmentYear"
+                    name="enrollmentYear"
+                    type="number"
+                    min={2010}
+                    max={maxYear}
+                    value={profile.enrollmentYear}
+                    onChange={handleChange}
+                    className="pl-10"
+                    required />
+                </div>
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="bio">自己紹介</Label>
-                <Textarea
-                  id="bio"
-                  name="bio"
-                  value={profile.bio}
-                  onChange={handleChange}
-                  placeholder="自己紹介"
-                  rows={4}
-                />
+                <div className="relative">
+                  <FileText className="absolute left-3 top-3 text-gray-400" />
+                  <Textarea
+                    id="bio"
+                    name="bio"
+                    value={profile.bio}
+                    onChange={handleChange}
+                    placeholder="自己紹介"
+                    rows={4}
+                    className="pl-10"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="portfolioUrl">ポートフォリオ URL</Label>
+                <div className="relative">
+                  <Globe className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                  <Input
+                    id="portfolioUrl"
+                    name="portfolioUrl"
+                    value={profile.portfolioUrl}
+                    onChange={handleChange}
+                    placeholder="https://ritsuki-i.github.io/yourusername"
+                    className="pl-10"
+                  />
+                </div>
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="githubUrl">GitHub URL</Label>
-                <Input
-                  id="githubUrl"
-                  name="githubUrl"
-                  value={profile.githubUrl}
-                  onChange={handleChange}
-                  placeholder="GitHub URL"
-                />
+                <div className="relative">
+                  <Github className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                  <Input
+                    id="githubUrl"
+                    name="githubUrl"
+                    value={profile.githubUrl}
+                    onChange={handleChange}
+                    placeholder="https://github.com/yourusername"
+                    className="pl-10"
+                  />
+                </div>
               </div>
             </div>
 

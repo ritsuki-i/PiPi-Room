@@ -13,5 +13,9 @@ export async function GET(req: NextRequest) {
   const existingUser = await db.select().from(users).where(eq(users.id, userId));
   const userExists = existingUser.length > 0;
 
-  return NextResponse.json({ exists: userExists });
+  return NextResponse.json({
+    userId: existingUser[0]?.id,
+    exists: userExists, 
+    userRole: existingUser[0]?.type || null // 安全にアクセス
+  });
 }

@@ -5,7 +5,7 @@ import { eq } from "drizzle-orm";
 
 
 export async function POST(req: Request) {
-  const { userId, name, accountName, icon, email, birthDate, bio, githubUrl } = await req.json();
+  const { userId, name, accountName, icon, email, enrollmentYear, bio, githubUrl } = await req.json();
 
   // すでに登録されているか確認
   const existingUser = await db.select().from(users).where(eq(users.id, userId)).execute();
@@ -14,7 +14,7 @@ export async function POST(req: Request) {
     // 既存ユーザーなら更新
     await db
       .update(users)
-      .set({ name, accountName, icon, birthDate, bio, githubUrl })
+      .set({ name, accountName, icon, enrollmentYear, bio, githubUrl })
       .where(eq(users.id, userId))
       .execute();
 
@@ -28,9 +28,10 @@ export async function POST(req: Request) {
     accountName,
     icon,
     email,
-    birthDate,
+    enrollmentYear,
     bio,
     githubUrl,
+    type: "general",
     createdAt: new Date(),
   });
 

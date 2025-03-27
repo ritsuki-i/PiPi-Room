@@ -4,7 +4,7 @@ import type React from "react"
 
 import { useUser } from "@clerk/nextjs"
 import { useState, useEffect } from "react"
-import { User, AtSign, Calendar, FileText, Github, Upload, X } from "lucide-react"
+import { User, AtSign, FileText, Github, Upload, X, GraduationCap, Globe, Mail } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -17,6 +17,9 @@ interface Notification {
   type: "success" | "error"
 }
 
+const currentYear = new Date().getFullYear();
+const maxYear = currentYear + 1;
+
 export default function ProfilePage() {
   const { user } = useUser()
   const [profile, setProfile] = useState({
@@ -24,8 +27,9 @@ export default function ProfilePage() {
     accountName: "",
     icon: user?.imageUrl || "",
     email: user?.primaryEmailAddress?.emailAddress || "",
-    birthDate: "",
+    enrollmentYear: "",
     bio: "",
+    portfolioUrl: "",
     githubUrl: "",
   })
   const [notification, setNotification] = useState<Notification | null>(null)
@@ -38,12 +42,12 @@ export default function ProfilePage() {
     if (!e.target.files || e.target.files.length === 0) return;
     const file = e.target.files[0];
     const reader = new FileReader();
-  
+
     reader.onloadend = () => {
       const base64Data = reader.result as string; // Base64 形式の画像データ
       setProfile({ ...profile, icon: base64Data }); // プレビュー用に設定
     };
-  
+
     reader.readAsDataURL(file); // Base64 に変換
   };
 
@@ -67,7 +71,11 @@ export default function ProfilePage() {
         throw new Error("保存に失敗しました")
       }
     } catch (error) {
-      setNotification({ message: "名前とアカウント名、生年月日を入力してください。", type: "error" })
+      if (!profile.name || !profile.accountName || !profile.enrollmentYear) {
+        setNotification({ message: "名前とアカウント名、入学年を入力してください。", type: "error" });
+      } else {
+        setNotification({ message: "このアカウント名は既に使用されています。", type: "error" });
+      }
       console.log(error);
     }
   }
@@ -85,9 +93,8 @@ export default function ProfilePage() {
     <div className="container mx-auto p-4">
       {notification && (
         <div
-          className={`fixed top-4 right-4 p-4 rounded-md ${
-            notification.type === "success" ? "bg-green-500" : "bg-red-500"
-          } text-white`}
+          className={`fixed top-4 right-4 p-4 rounded-md ${notification.type === "success" ? "bg-green-500" : "bg-red-500"
+            } text-white`}
         >
           {notification.message}
         </div>
@@ -121,7 +128,7 @@ export default function ProfilePage() {
 
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="name">名前</Label>
+              <Label htmlFor="name">名前<span className="text-red-500 ml-1">*</span></Label>
               <div className="relative">
                 <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
                 <Input
@@ -131,12 +138,13 @@ export default function ProfilePage() {
                   onChange={handleChange}
                   placeholder="名前"
                   className="pl-10"
+                  required
                 />
               </div>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="accountName">アカウント名</Label>
+              <Label htmlFor="accountName">アカウント名<span className="text-red-500 ml-1">*</span></Label>
               <div className="relative">
                 <AtSign className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
                 <Input
@@ -146,22 +154,41 @@ export default function ProfilePage() {
                   onChange={handleChange}
                   placeholder="アカウント名"
                   className="pl-10"
+                  required
                 />
               </div>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="birthDate">生年月日</Label>
+              <Label htmlFor="email">メールアドレス</Label>
               <div className="relative">
-                <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
                 <Input
-                  id="birthDate"
-                  name="birthDate"
-                  type="date"
-                  value={profile.birthDate}
+                  id="email"
+                  name="email"
+                  type="email"
+                  value={profile.email}
                   onChange={handleChange}
+                  placeholder="メールアドレス"
                   className="pl-10"
                 />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="enrollmentYear">大学入学年<span className="text-red-500 ml-1">*</span></Label>
+              <div className="relative">
+                <GraduationCap className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                <Input
+                  id="enrollmentYear"
+                  name="enrollmentYear"
+                  type="number"
+                  min={2010}
+                  max={maxYear}
+                  value={profile.enrollmentYear}
+                  onChange={handleChange}
+                  className="pl-10"
+                  required />
               </div>
             </div>
 
@@ -176,6 +203,21 @@ export default function ProfilePage() {
                   onChange={handleChange}
                   placeholder="自己紹介"
                   rows={4}
+                  className="pl-10"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="portfolioUrl">ポートフォリオ URL</Label>
+              <div className="relative">
+                <Globe className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                <Input
+                  id="portfolioUrl"
+                  name="portfolioUrl"
+                  value={profile.portfolioUrl}
+                  onChange={handleChange}
+                  placeholder="https://ritsuki-i.github.io/yourusername"
                   className="pl-10"
                 />
               </div>

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAuth } from "@clerk/nextjs/server";
 import { db } from "@/db";
-import { users, articles, userArticles, works, userWorks, labels, technologies, articleLabels, workLabels, workTechnologies, articleTechnologies } from "@/db/schema";
+import { articles, userArticles, works, userWorks, labels, technologies, articleLabels, workLabels, workTechnologies, articleTechnologies } from "@/db/schema";
 import { eq, inArray } from "drizzle-orm";
 import { ArticleType, WorkType } from "@/types";
 

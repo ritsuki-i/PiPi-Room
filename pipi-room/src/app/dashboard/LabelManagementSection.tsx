@@ -91,7 +91,11 @@ export default function LabelTechnologyManager() {
             body: JSON.stringify({ name }),
         })
         toast({ title: "作成完了", description: `${type === "label" ? "カテゴリ" : "技術"}を追加しました。` })
-        type === "label" ? setNewLabelName("") : setNewTechName("")
+        if (type === "label") {
+            setNewLabelName("")
+        } else {
+            setNewTechName("")
+        }
         fetchItems()
     }
 

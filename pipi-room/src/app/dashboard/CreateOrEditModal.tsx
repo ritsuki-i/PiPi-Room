@@ -3,6 +3,7 @@
 import type React from "react"
 import { useState, useEffect } from "react"
 import { Trash, Upload, Save, Plus } from "lucide-react"
+import { toast } from "@/hooks/use-toast"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -114,28 +115,61 @@ export default function CreateOrEditModal({
     setSelectedTechnologieIds((prev) => (prev.includes(technologieId) ? prev.filter((id) => id !== technologieId) : [...prev, technologieId]))
   }
 
-  const handleCreateLabel = () => {
+  const handleCreateLabel = async () => {
     if (newLabelName.trim()) {
-      const newLabel: LabelType = { id: Date.now(), name: newLabelName.trim() }
-      setLocalLabels([...localLabels, newLabel]) // stateに追加
-      onCreateLabel(newLabel)
-      // 追加: 作成したラベルを `labels` にも即反映
-      labels.push(newLabel)
-      setSelectedLabelIds([...selectedLabelIds, newLabel.id])
-      setNewLabelName("")
+      try {
+        // 1. ラベルをAPIに即POST
+        const res = await fetch("/api/labels", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name: newLabelName.trim() }),
+        });
+
+        if (!res.ok) throw new Error("ラベル作成に失敗");
+
+        // 2. 本物のラベルIDを取得
+        const createdLabel: LabelType = await res.json();
+
+        // 3. 選択リストに追加
+        setSelectedLabelIds(prev => [...prev, createdLabel.id]);
+
+        // 4. ラベルリストにも追加（状態管理が必要）
+        onCreateLabel(createdLabel); // ←親コンポーネントの配列に追加させる
+
+        setNewLabelName("");
+      } catch (error) {
+        console.error("ラベル作成エラー:", error);
+      }
     }
-  }
+  };
 
-
-  const handleCreateTechnologie = () => {
+  const handleCreateTechnologie = async () => {
     if (newTechnologieName.trim()) {
-      const newTechnologie: TechnologieType = { id: Date.now(), name: newTechnologieName.trim() }
-      onCreateTechnologie(newTechnologie)
-      technologies.push(newTechnologie)
-      setSelectedTechnologieIds([...selectedTechnologieIds, newTechnologie.id])
-      setNewTechnologieName("")
+      try {
+        // 1. 技術をAPIに即POST
+        const res = await fetch("/api/technologies", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name: newTechnologieName.trim() }),
+        });
+
+        if (!res.ok) throw new Error("技術の作成に失敗");
+
+        // 2. DBから返された本物のIDを取得
+        const createdTechnologie: TechnologieType = await res.json();
+
+        // 3. 選択中の技術IDに追加
+        setSelectedTechnologieIds(prev => [...prev, createdTechnologie.id]);
+
+        // 4. 親コンポーネントにも追加を伝える
+        onCreateTechnologie(createdTechnologie);
+
+        setNewTechnologieName("");
+      } catch (error) {
+        console.error("技術作成エラー:", error);
+      }
     }
-  }
+  };
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {}
@@ -152,19 +186,21 @@ export default function CreateOrEditModal({
   }
 
   const handleSubmit = async () => {
-    if (!validateForm()) return;
+    if (!validateForm()) {
+      toast({
+        title: "入力エラー",
+        description: "必須項目をすべて入力してください。",
+        variant: "destructive",
+      });
+      return;
+    }
 
-    // 1. まだDBに無いラベルを一括作成
-    //    ここでは「id が 1兆 (Date.now() など) 以上なら未登録」とみなす例
     const newLabelIds = selectedLabelIds.filter((id) => id >= 1_000_000_000_000);
-
     const finalLabelIds = selectedLabelIds.filter(id =>
       labels.some(label => label.id === id)
     );
 
-    // 2. 未登録ラベルは /api/labels にPOSTして本物のIDを取得
     for (const tempId of newLabelIds) {
-      // ラベル配列からラベル名を取得
       const labelObj = labels.find((lbl) => lbl.id === tempId);
       if (!labelObj) continue;
 
@@ -177,25 +213,24 @@ export default function CreateOrEditModal({
         if (!res.ok) throw new Error("ラベル作成に失敗");
 
         const createdLabel = await res.json();
-        // createdLabel.id => DBで発行された本物のID
         finalLabelIds.push(createdLabel.id);
       } catch (error) {
-        console.error(error);
+        toast({
+          title: "カテゴリの作成に失敗しました",
+          description: `${labelObj?.name} は既に存在するか、問題が発生しました。画面を再読み込みして再試行してください。`,
+          variant: "destructive",
+        });
+        return;
       }
     }
 
-    // 1. まだDBに無いラベルを一括作成
-    //    ここでは「id が 1兆 (Date.now() など) 以上なら未登録」とみなす例
     const newTechnologieIds = selectedTechnologieIds.filter((id) => id >= 1_000_000_000_000);
-
     const finalTechnologieIds = selectedTechnologieIds.filter(id =>
       technologies.some(tech => tech.id === id)
     );
 
-    // 2. 未登録ラベルは /api/technologies にPOSTして本物のIDを取得
     for (const tempId of newTechnologieIds) {
-      // ラベル配列からラベル名を取得
-      const technologieObj = technologies.find((lbl) => lbl.id === tempId);
+      const technologieObj = technologies.find((tech) => tech.id === tempId);
       if (!technologieObj) continue;
 
       try {
@@ -204,42 +239,51 @@ export default function CreateOrEditModal({
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ name: technologieObj.name }),
         });
-        if (!res.ok) throw new Error("ラベル作成に失敗");
+        if (!res.ok) throw new Error("技術作成に失敗");
 
         const createdTechnologie = await res.json();
-        // createdTechnologie.id => DBで発行された本物のID
         finalTechnologieIds.push(createdTechnologie.id);
       } catch (error) {
-        console.error(error);
+        toast({
+          title: "技術の作成に失敗しました",
+          description: `${technologieObj?.name} は既に存在するか、問題が発生しました。画面を再読み込みして再試行してください。`,
+          variant: "destructive",
+        });
+        return;
       }
     }
 
-    // 3. 記事/作品を保存
     const endpoint = type === "article" ? "/api/articles" : "/api/works";
     const method = data ? "PATCH" : "POST";
     const url = data ? `${endpoint}/${data.id}` : endpoint;
 
     try {
-
       const res = await fetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...formData,
-          labelIds: finalLabelIds, // ここで本物のラベルIDを渡す
+          labelIds: finalLabelIds,
           technologieIds: finalTechnologieIds,
         }),
       });
 
-      if (!res.ok) {
-        throw new Error(`${method} request failed`);
-      }
+      if (!res.ok) throw new Error(`${method} request failed`);
 
       const result = await res.json();
-      onSave(type, result, data ? "edit" : "create")
+      toast({
+        title: data ? "更新成功" : "作成成功",
+        description: `${type === "article" ? "記事" : "作品"}が正常に${data ? "更新" : "作成"}されました。`,
+      });
+      onSave(type, result, data ? "edit" : "create");
       onClose();
     } catch (error) {
       console.error("保存に失敗しました:", error);
+      toast({
+        title: "保存に失敗しました",
+        description: "もう一度お試しください。画面を更新することで改善する場合もあります。",
+        variant: "destructive",
+      });
     }
   };
 

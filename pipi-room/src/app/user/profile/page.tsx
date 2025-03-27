@@ -3,7 +3,7 @@
 import type React from "react"
 import { useUser } from "@clerk/nextjs"
 import { useState, useEffect } from "react"
-import { User, AtSign, FileText, Github, Upload, X, GraduationCap, Globe, Mail, Loader2 } from "lucide-react"
+import { User, AtSign, FileText, Github, Upload, GraduationCap, Globe, Mail, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"

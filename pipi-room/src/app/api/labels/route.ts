@@ -3,7 +3,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
 import { labels } from "@/db/schema";
 import { getAuth } from "@clerk/nextjs/server";
-import { inArray } from "drizzle-orm";
 
 export async function POST(req: NextRequest) {
     const { userId } = getAuth(req);

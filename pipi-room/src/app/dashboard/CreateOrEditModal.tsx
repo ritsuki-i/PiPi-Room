@@ -73,7 +73,6 @@ export default function CreateOrEditModal({
       } as WorkType)),
   )
 
-  const [localLabels, setLocalLabels] = useState<LabelType[]>(labels)
   const [selectedLabelIds, setSelectedLabelIds] = useState<number[]>(data?.labelIds || [])
   const [newLabelName, setNewLabelName] = useState("")
   const [selectedTechnologieIds, setSelectedTechnologieIds] = useState<number[]>(data?.technologieIds || [])
@@ -220,6 +219,7 @@ export default function CreateOrEditModal({
           description: `${labelObj?.name} は既に存在するか、問題が発生しました。画面を再読み込みして再試行してください。`,
           variant: "destructive",
         });
+        console.error(error);
         return;
       }
     }
@@ -249,6 +249,7 @@ export default function CreateOrEditModal({
           description: `${technologieObj?.name} は既に存在するか、問題が発生しました。画面を再読み込みして再試行してください。`,
           variant: "destructive",
         });
+        console.error(error);
         return;
       }
     }

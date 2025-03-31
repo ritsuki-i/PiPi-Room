@@ -12,9 +12,11 @@ import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useRouter } from "next/navigation";
+import { supabase } from "@/lib/supabase";
 
 export default function ProfilePage() {
   const { user } = useUser();
+  const [userId, setUserId] = useState(null);
   const router = useRouter();
   const [loading, setLoading] = useState(true)
   const [profile, setProfile] = useState({
@@ -31,6 +33,8 @@ export default function ProfilePage() {
 
   const currentYear = new Date().getFullYear();
   const maxYear = currentYear + 1;
+
+  const iconWithTimestamp = `${profile.icon}?t=${Date.now()}`;
 
   const RoleBadge = ({ role }: { role: string | null }) => {
     // Define styling for each role type
@@ -60,6 +64,7 @@ export default function ProfilePage() {
         const res = await fetch("/api/user/check");
         const data = await res.json();
 
+        setUserId(data.userId);
         if (!data.exists) {
           // ✅ ユーザーが存在しない場合 `/user/createAccount` にリダイレクト
           router.push("/user/createAccount");
@@ -111,19 +116,39 @@ export default function ProfilePage() {
     })
   }
 
-  const handleIconFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!e.target.files || e.target.files.length === 0) return
+  const handleIconFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files || e.target.files.length === 0) return;
 
     const file = e.target.files[0];
-    const reader = new FileReader();
+    let extension = file.type.split("/")[1] || "png";
+    extension = extension.replace("x-", "");
+    const filePath = `${userId}/avatar.${extension}`;
 
-    reader.onloadend = () => {
-      const base64Data = reader.result as string; // Base64 形式の画像データ
-      setProfile({ ...profile, icon: base64Data }); // プレビュー用に設定
-    };
+    console.log(filePath)
 
-    reader.readAsDataURL(file);
-  }
+    // 1. Supabase Storage にアップロード
+    const { data, error } = await supabase.storage
+      .from("icons") // ← ストレージバケット名
+      .upload(filePath, file, {
+        upsert: true, // 上書き許可
+      });
+
+    if (error) {
+      console.error("画像のアップロードに失敗:", error.message);
+      return;
+    }
+
+    // 2. パブリックURLを取得
+    const { publicUrl } = supabase.storage
+      .from("icons")
+      .getPublicUrl(filePath).data;
+
+    // 3. URLをプロフィールのiconに設定（DB保存も可能）
+    setProfile((prev) => ({
+      ...prev,
+      icon: publicUrl,
+    }));
+  };
 
   const updateProfile = async () => {
     if (!user?.id) {
@@ -178,7 +203,7 @@ export default function ProfilePage() {
           <div className="space-y-6">
             <div className="flex flex-col items-center space-y-4">
               <Avatar className="w-32 h-32">
-                <AvatarImage src={profile.icon} alt="Profile" />
+                <AvatarImage src={iconWithTimestamp} alt="Profile" />
                 <AvatarFallback>{profile.name.charAt(0)}</AvatarFallback>
               </Avatar>
               <Label htmlFor="icon-upload" className="cursor-pointer">

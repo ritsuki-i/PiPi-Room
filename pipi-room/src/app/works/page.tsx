@@ -8,7 +8,7 @@ import { WorkType, UserType, LabelType, TechnologieType } from "../../types";
 import { Badge } from "@/components/ui/badge"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import Image from "next/image";
-import { ExternalLink, User, Loader2 } from "lucide-react"
+import { ExternalLink, User, Loader2, TagIcon, ComponentIcon as ChipIcon } from "lucide-react"
 
 export default function WorkList() {
   const [works, setWorks] = useState<WorkType[]>([]);
@@ -18,6 +18,7 @@ export default function WorkList() {
   const [selectedWork, setSelectedWork] = useState<WorkType | null>(null);
   const [selectedUser, setSelectedUser] = useState<UserType | null>(null);
   const [loading, setLoading] = useState(true)
+  const [userRole, setUserRole] = useState<string | null>(null);
 
   const RoleBadge = ({ role }: { role: string | null }) => {
     // Define styling for each role type
@@ -39,48 +40,69 @@ export default function WorkList() {
   }
 
   useEffect(() => {
+    const checkUserExists = async () => {
+      try {
+        const res = await fetch("/api/user/check");
+        const data = await res.json();
+
+        if (data.exists) {
+          setUserRole(data.userRole);
+        }
+      } catch (error) {
+        console.error("ユーザーの存在チェックに失敗しました:", error);
+      }
+    };
+
+    checkUserExists();
+  }, []);
+
+  // ② userRole がセットされたあとにデータ取得・フィルタリング
+  useEffect(() => {
     const fetchData = async () => {
       try {
         const worksRes = await fetch("/api/works");
-
         const worksData: WorkType[] = await worksRes.json();
 
-        setWorks(worksData);
+        // ✅ フィルタリング
+        const filteredWorks = worksData.filter((work) => {
+          if (work.type === "Preview") return false;
+          if (work.type === "Public") return true;
+          if (work.type === "Private") return !(userRole === null || userRole === "general");
+          return false;
+        });
 
-        // ✅ `worksData` から `authorIds` を取得し、重複を削除
-        const authorIds = Array.from(new Set(worksData.flatMap(work => work.authorIds)));
+        setWorks(filteredWorks);
 
+        // 各 ID 情報もここで取得
+        const authorIds = Array.from(new Set(filteredWorks.flatMap(work => work.authorIds)));
         if (authorIds.length > 0) {
           const usersRes = await fetch(`/api/user?ids=${authorIds.join(",")}`);
           const usersData: UserType[] = await usersRes.json();
           setUsers(Object.fromEntries(usersData.map(user => [user.id, user])));
         }
 
-        // ✅ `worksData` から `authorIds` を取得し、重複を削除
-        const labelIds = Array.from(new Set(worksData.flatMap(work => work.labelIds)));
-
+        const labelIds = Array.from(new Set(filteredWorks.flatMap(work => work.labelIds)));
         if (labelIds.length > 0) {
           const labelsRes = await fetch(`/api/labels?ids=${labelIds.join(",")}`);
           const labelsData: LabelType[] = await labelsRes.json();
           setLabels(Object.fromEntries(labelsData.map(label => [label.id, label])));
         }
 
-        // ✅ `worksData` から `authorIds` を取得し、重複を削除
-        const technologieIds = Array.from(new Set(worksData.flatMap(work => work.technologieIds)));
-
+        const technologieIds = Array.from(new Set(filteredWorks.flatMap(work => work.technologieIds)));
         if (technologieIds.length > 0) {
           const technologiesRes = await fetch(`/api/technologies?ids=${technologieIds.join(",")}`);
           const technologiesData: TechnologieType[] = await technologiesRes.json();
-          setTechnologies(Object.fromEntries(technologiesData.map(technologie => [technologie.id, technologie])));
+          setTechnologies(Object.fromEntries(technologiesData.map(t => [t.id, t])));
         }
       } catch (error) {
         console.error("データの取得に失敗しました", error);
+      } finally {
+        setLoading(false);
       }
     };
 
     fetchData();
-    setLoading(false);
-  }, []);
+  }, [userRole]);
 
   if (loading) {
     return (
@@ -150,6 +172,7 @@ export default function WorkList() {
               <div className="mt-2">
                 {(work.labelIds ?? []).map((labelId) => (
                   <Badge key={labelId} variant="outline" className="text-xs bg-green-50 text-green-700 border-green-200 hover:bg-green-100 px-2 py-1 rounded mr-2">
+                    <TagIcon className="h-3 w-3" />
                     {labels[labelId]?.name}
                   </Badge>
                 ))}
@@ -159,6 +182,7 @@ export default function WorkList() {
                     variant="outline"
                     className="text-xs bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100 px-2 py-1 rounded mr-2"
                   >
+                    <ChipIcon className="h-3 w-3" />
                     {technologies[technologieId]?.name}
                   </Badge>
                 ))}
@@ -217,6 +241,7 @@ export default function WorkList() {
                 <div className="flex flex-wrap gap-2">
                   {(selectedWork.labelIds ?? []).map((labelId) => (
                     <Badge key={labelId} variant="outline" className="text-xs bg-green-50 text-green-700 border-green-200 hover:bg-green-100">
+                      <TagIcon className="h-3 w-3" />
                       {labels[labelId]?.name}
                     </Badge>
                   ))}
@@ -226,6 +251,7 @@ export default function WorkList() {
                       variant="outline"
                       className="text-xs bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100"
                     >
+                      <ChipIcon className="h-3 w-3" />
                       {technologies[technologieId]?.name}
                     </Badge>
                   ))}

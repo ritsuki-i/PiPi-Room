@@ -23,6 +23,8 @@ import { UserType } from "@/types"
 import { useUser } from "@clerk/nextjs"
 import { useToast } from "@/hooks/use-toast"
 import { Toaster } from "@/components/ui/toaster"
+import { supabase } from "@/lib/supabase";
+import type { SearchOptions } from "@supabase/storage-js"
 
 export default function UserManagement() {
     type RoleType = "admin" | "manager" | "member" | "general"
@@ -91,9 +93,100 @@ export default function UserManagement() {
         })
     }
 
+    type SearchOptionsWithRecursive = SearchOptions & {
+        recursive?: boolean;
+    };
+
+    const deleteUserFiles = async (userId: string, bucket: string) => {
+        const listOptions: SearchOptionsWithRecursive | undefined =
+            bucket === "articles" ? { recursive: true } : undefined;
+
+        if (bucket === "icons") {
+            const { data, error } = await supabase.storage
+                .from(bucket)
+                .list(`${userId}/`, listOptions);
+
+
+            console.log("data:", data)
+
+
+            if (error) {
+                console.error(`[${bucket}] 一覧取得エラー:`, error.message);
+                return;
+            }
+
+            const filePaths = data?.map(file => `${userId}/${file.name}`) || [];
+
+            if (filePaths.length === 0) {
+                console.log(`[${bucket}] 削除対象のファイルなし`);
+                return;
+            }
+
+            const { error: deleteError } = await supabase.storage
+                .from(bucket)
+                .remove(filePaths);
+
+            if (deleteError) {
+                console.error(`[${bucket}] 削除エラー:`, deleteError.message);
+            } else {
+                console.log(`ユーザーのアイコン画像を削除しました`);
+            }
+        } else {
+            const { data: folders, error: folderError } = await supabase.storage
+                .from(bucket)
+                .list(`${userId}/`); // 再帰せず、まず記事IDフォルダを取る
+
+            if (folderError) {
+                console.error("フォルダ一覧取得エラー:", folderError.message);
+                return;
+            }
+
+            const allFilePaths: string[] = [];
+
+            for (const folder of folders || []) {
+                // 各記事IDフォルダの中のファイルを再取得
+                const { data: files, error: fileError } = await supabase.storage
+                    .from(bucket)
+                    .list(`${userId}/${folder.name}/`);
+
+                if (fileError) {
+                    console.error(`ファイル一覧取得エラー（${folder.name}）:`, fileError.message);
+                    continue;
+                }
+
+                const paths = files?.map(file => `${userId}/${folder.name}/${file.name}`) || [];
+                allFilePaths.push(...paths);
+            }
+
+            if (allFilePaths.length === 0) {
+                console.log(`[${bucket}] 削除対象のファイルなし`);
+                return;
+            }
+
+            const { error: deleteError } = await supabase.storage
+                .from(bucket)
+                .remove(allFilePaths);
+
+            if (deleteError) {
+                console.error(`[${bucket}] 削除エラー:`, deleteError.message);
+            } else {
+                console.log(`[${bucket}] すべてのファイルを削除しました`);
+            }
+        }
+    };
+
     const handleDelete = async (userId: string) => {
         try {
             await fetch(`/api/user/${userId}`, { method: "DELETE" })
+            try {
+                await Promise.all([
+                    deleteUserFiles(userId, "icons"),
+                    deleteUserFiles(userId, "work-icon"),
+                    deleteUserFiles(userId, "articles"),
+                ]);
+            } catch (error) {
+                console.error("ユーザーファイルの削除に失敗:", error);
+            }
             setUsers(users.filter(u => u.id !== userId))
         } catch (err) {
             console.error("削除失敗:", err)

@@ -2,7 +2,7 @@
 
 import type React from "react"
 import { useState, useEffect } from "react"
-import { Trash, Upload, Save, Plus } from "lucide-react"
+import { Trash, Upload, Save, Plus, ChevronLast } from "lucide-react"
 import { toast } from "@/hooks/use-toast"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
@@ -23,6 +23,9 @@ import {
 } from "@/components/ui/alert-dialog"
 import type { ArticleType, WorkType, LabelType, TechnologieType } from "@/types"
 import Image from "next/image"
+import { useRouter } from 'next/navigation';
+import { supabase } from "@/lib/supabase";
+import type { SearchOptions } from "@supabase/storage-js"
 
 interface CreateOrEditModalProps {
   type: "article" | "work"
@@ -34,6 +37,59 @@ interface CreateOrEditModalProps {
   onCreateLabel: (label: LabelType) => void
   onCreateTechnologie: (technologie: TechnologieType) => void
 }
+
+const templateContent = `
+## 📝 概要（Summary）
+この記事では〇〇について紹介します。初心者にもわかりやすく解説します。
+
+---
+
+## 📌 目次（Table of Contents）
+1. はじめに  
+2. 背景・基本情報  
+3. メイン内容  
+4. まとめ  
+5. 参考リンク  
+
+---
+
+## 1. はじめに
+ここでは、記事の背景や目的を簡単に書きます。
+
+---
+
+## 2. 背景・基本情報
+- 用語の説明  
+- なぜこれが重要なのか  
+- 前提知識など  
+
+---
+
+## 3. メイン内容
+
+### 🔹 トピック1
+詳細な説明をここに。
+
+### 🔹 トピック2
+図やコードがあればここに挿入。
+
+\`\`\`javascript
+// これはコードの例
+console.log("Hello, world!");
+\`\`\`
+
+---
+
+## 4. まとめ
+この記事で学んだことや、次に取るべきアクションなどをまとめます。
+
+---
+
+## 5. 参考リンク
+- [公式サイト](https://example.com)
+- [関連記事](https://example.com)
+`;
+
 
 export default function CreateOrEditModal({
   type,
@@ -52,11 +108,11 @@ export default function CreateOrEditModal({
         id: 0,
         title: "",
         date: new Date().toISOString(),
-        content: "",
+        content: templateContent,
         labelIds: [],
         technologieIds: [],
         authorIds: [],
-        type: "Public",
+        type: "Preview",
       } as ArticleType)
       : ({
         id: 0,
@@ -73,20 +129,79 @@ export default function CreateOrEditModal({
       } as WorkType)),
   )
 
+  const [userId, setUserId] = useState(null);
+
   const [selectedLabelIds, setSelectedLabelIds] = useState<number[]>(data?.labelIds || [])
   const [newLabelName, setNewLabelName] = useState("")
   const [selectedTechnologieIds, setSelectedTechnologieIds] = useState<number[]>(data?.technologieIds || [])
   const [newTechnologieName, setNewTechnologieName] = useState("")
   const [errors, setErrors] = useState<Record<string, string>>({})
-  const [imagePreview, setImagePreview] = useState<string | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [iconWithTimestamp, setIconWithTimestamp] = useState<string | null>(null)
+
+  const router = useRouter();
 
   useEffect(() => {
+    const checkUserExists = async () => {
+
+      try {
+        const res = await fetch("/api/user/check");
+        const data = await res.json();
+
+        setUserId(data.userId);
+        if (!data.exists) {
+          // ✅ ユーザーが存在しない場合 `/user/createAccount` にリダイレクト
+          router.push("/user/createAccount");
+        }
+      } catch (error) {
+        console.error("ユーザーの存在チェックに失敗しました:", error);
+      }
+    };
+
+    checkUserExists()
+
     if (data && "icon" in data && data.icon) {
-      setImagePreview(data.icon as string)
+      setIconWithTimestamp(`${data.icon}?t=${Date.now()}`)
     }
   }, [data])
+
+  type SearchOptionsWithRecursive = SearchOptions & {
+    recursive?: boolean;
+  };
+
+  const deleteUserFiles = async (userId: string, deleteId: number, fileName: string) => {
+    const listOptions: SearchOptionsWithRecursive | undefined =
+      fileName === "articles" ? { recursive: true } : undefined;
+
+    const { data, error } = await supabase.storage
+      .from(fileName)
+      .list(`${userId}/${deleteId}`, listOptions);
+
+    if (error) {
+      console.error("ファイル一覧取得エラー:", error.message);
+      return;
+    }
+
+    const filePaths = data?.map(file => `${userId}/${deleteId}/${file.name}`) || [];
+
+    console.log("削除対象ファイル:", filePaths)
+
+    if (filePaths.length === 0) {
+      console.log(`[${fileName}] 削除対象のファイルなし`);
+      return;
+    }
+
+    const { error: deleteError } = await supabase.storage
+      .from(fileName)
+      .remove(filePaths);
+
+    if (deleteError) {
+      console.error(`[${fileName}] 削除エラー:`, deleteError.message);
+    } else {
+      console.log(`[${fileName}] すべてのファイルを削除しました`);
+    }
+  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target
@@ -94,17 +209,42 @@ export default function CreateOrEditModal({
     setErrors({ ...errors, [name]: "" })
   }
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (file) {
-      const reader = new FileReader()
-      reader.onloadend = () => {
-        setImagePreview(reader.result as string)
-        setFormData({ ...formData, icon: reader.result as string })
-      }
-      reader.readAsDataURL(file)
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files || e.target.files.length === 0) return;
+
+    const file = e.target.files[0];
+    let extension = file.type.split("/")[1] || "png";
+    extension = extension.replace("x-", "");
+    const filePath = `${userId}/${(formData as WorkType).id}/avatar.${extension}`;
+
+    // 1. Supabase Storage にアップロード
+    const { data, error } = await supabase.storage
+      .from("work-icon") // ← ストレージバケット名
+      .upload(filePath, file, {
+        upsert: true, // 上書き許可
+      });
+
+    if (error) {
+      console.error("画像のアップロードに失敗:", error.message);
+      return;
     }
-  }
+
+    // 2. パブリックURLを取得
+    const { publicUrl } = supabase.storage
+      .from("work-icon")
+      .getPublicUrl(filePath).data;
+
+
+    if ("icon" in formData) {
+      setIconWithTimestamp(`${publicUrl}?t=${Date.now()}`);
+    }
+
+    // 3. URLをプロフィールのiconに設定（DB保存も可能）
+    setFormData((prev) => ({
+      ...prev,
+      icon: publicUrl,
+    }));
+  };
 
   const handleLabelToggle = (labelId: number) => {
     setSelectedLabelIds((prev) => (prev.includes(labelId) ? prev.filter((id) => id !== labelId) : [...prev, labelId]))
@@ -174,11 +314,8 @@ export default function CreateOrEditModal({
     const newErrors: Record<string, string> = {}
     if (type === "article") {
       if (!("title" in formData) || !formData.title) newErrors.title = "タイトルは必須です"
-      if (!("date" in formData) || !formData.date) newErrors.date = "日付は必須です"
-      if (!("content" in formData) || !formData.content) newErrors.content = "内容は必須です"
     } else {
       if (!("name" in formData) || !formData.name) newErrors.name = "名前は必須です"
-      if (!("date" in formData) || !formData.date) newErrors.date = "日付は必須です"
     }
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
@@ -272,12 +409,19 @@ export default function CreateOrEditModal({
       if (!res.ok) throw new Error(`${method} request failed`);
 
       const result = await res.json();
+
       toast({
         title: data ? "更新成功" : "作成成功",
         description: `${type === "article" ? "記事" : "作品"}が正常に${data ? "更新" : "作成"}されました。`,
       });
       onSave(type, result, data ? "edit" : "create");
-      onClose();
+      if (type === "article" && data) {
+        router.push(`/dashboard/articles/${result.articleId}`);
+      } else if (type === "article") {
+        router.push(`/dashboard/articles/${result.id}`);
+      } else {
+        onClose();
+      }
     } catch (error) {
       console.error("保存に失敗しました:", error);
       toast({
@@ -288,7 +432,7 @@ export default function CreateOrEditModal({
     }
   };
 
-  const handleDelete = async () => {
+  const handleDelete = async (ownerId : string, deleteId: number) => {
     if (!data) return
 
     setIsDeleting(true)
@@ -296,6 +440,14 @@ export default function CreateOrEditModal({
 
     const endpoint = type === "article" ? "/api/articles" : "/api/works"
     const url = `${endpoint}/${data.id}`
+
+    if (ownerId) {
+      if (type === "article") {
+        deleteUserFiles(ownerId, deleteId, "articles");
+      } else {
+        deleteUserFiles(ownerId, deleteId, "work-icon");
+      }
+    }
 
     try {
       const res = await fetch(url, {
@@ -341,38 +493,6 @@ export default function CreateOrEditModal({
                   className="col-span-3"
                 />
                 {errors.title && <p className="text-red-500 text-sm col-start-2 col-span-3">{errors.title}</p>}
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="content" className="text-right">
-                  内容
-                </Label>
-                <Textarea
-                  id="content"
-                  name="content"
-                  value={(formData as ArticleType).content}
-                  onChange={handleChange}
-                  className="col-span-3"
-                  rows={5}
-                />
-                {errors.content && <p className="text-red-500 text-sm col-start-2 col-span-3">{errors.content}</p>}
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="type" className="text-right">
-                  タイプ
-                </Label>
-                <select
-                  id="type"
-                  name="type"
-                  value={(formData as WorkType).type ?? "Public"}
-                  onChange={handleChange}
-                  className="col-span-3 border rounded px-3 py-2"
-                >
-                  <option value="Public">Public</option>
-                  <option value="Private">Private</option>
-                </select>
-                <p className="text-xs text-gray-500 col-start-2 col-span-3">
-                  ※誰でも閲覧可能またはメンバーのみ閲覧可能か選ぶことができます。
-                </p>
               </div>
             </>
           ) : (
@@ -445,10 +565,10 @@ export default function CreateOrEditModal({
                     <Upload className="mr-2 h-4 w-4" />
                     画像をアップロード
                   </Button>
-                  {imagePreview && (
+                  {iconWithTimestamp && (
                     <div className="mt-2">
                       <Image
-                        src={imagePreview || "/placeholder.svg"}
+                        src={iconWithTimestamp || "/images/noimg.png"}
                         alt="Preview"
                         width={128}
                         height={128}
@@ -465,7 +585,7 @@ export default function CreateOrEditModal({
                 <select
                   id="type"
                   name="type"
-                  value={(formData as WorkType).type ?? "Public"}
+                  value={(data as WorkType).type ?? "Public"}
                   onChange={handleChange}
                   className="col-span-3 border rounded px-3 py-2"
                 >
@@ -562,7 +682,11 @@ export default function CreateOrEditModal({
                   <AlertDialogAction
                     onClick={(e) => {
                       e.preventDefault() // デフォルトの閉じる動作を防止
-                      handleDelete()
+                      if(type==="article"){
+                        handleDelete((formData as ArticleType).authorIds[0], (formData as WorkType).id)
+                      }else{
+                        handleDelete((formData as WorkType).authorIds[0], (formData as WorkType).id)
+                      }
                     }}
                     disabled={isDeleting}
                     className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
@@ -579,10 +703,17 @@ export default function CreateOrEditModal({
               </AlertDialogContent>
             </AlertDialog>
           )}
-          <Button onClick={handleSubmit}>
-            <Save className="mr-2 h-4 w-4" />
-            保存
-          </Button>
+          {type === "article" ? (
+            <Button onClick={handleSubmit}>
+              <ChevronLast />
+              次へ
+            </Button>
+          ) : (
+            <Button onClick={handleSubmit}>
+              <Save className="mr-2 h-4 w-4" />
+              保存
+            </Button>
+          )}
         </div>
       </DialogContent>
     </Dialog >

@@ -585,7 +585,7 @@ export default function CreateOrEditModal({
                 <select
                   id="type"
                   name="type"
-                  value={(data as WorkType).type ?? "Public"}
+                  value={data ? (data as WorkType).type : "Public"}
                   onChange={handleChange}
                   className="col-span-3 border rounded px-3 py-2"
                 >

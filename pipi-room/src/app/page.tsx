@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect } from "react";
 import { useUser } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button"
 import Image from "next/image";
 
 export default function HomePage() {
@@ -10,17 +10,17 @@ export default function HomePage() {
   const router = useRouter();
 
   // ✅ ログイン済みならダッシュボードへリダイレクト
-  useEffect(() => {
+  const handleClick = async () => {
     if (user) {
-      router.push("/dashboard");
+      router.push("/works");
     }
-  }, [user, router]);
+  };
 
   return (
     <div className="relative min-h-screen flex flex-col items-center justify-center bg-gray-100">
       {/* ✅ 背景画像（PC のデザイン画像を設定） */}
       <div className="absolute inset-0 w-full h-full">
-        <Image 
+        <Image
           src="/images/PiedPiperlogo.png" // ✅ ここにオシャレなPCの画像を入れる
           alt="背景画像"
           layout="fill"
@@ -38,6 +38,9 @@ export default function HomePage() {
           すべてのアプリをまとめて管理し、チームの生産性を向上させましょう。
           使用するにはサインインしてください。
         </p>
+        <Button className="mt-5"
+          onClick={() =>  handleClick()}>
+          Start now</Button>
       </div>
     </div>
   );

@@ -139,6 +139,7 @@ export default function CreateOrEditModal({
   const [isDeleting, setIsDeleting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [iconWithTimestamp, setIconWithTimestamp] = useState<string | null>(null)
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
   const router = useRouter();
 
@@ -185,7 +186,7 @@ export default function CreateOrEditModal({
 
     const filePaths = data?.map(file => `${userId}/${deleteId}/${file.name}`) || [];
 
-    console.log("削除対象ファイル:", filePaths)
+    //console.log("削除対象ファイル:", filePaths)
 
     if (filePaths.length === 0) {
       console.log(`[${fileName}] 削除対象のファイルなし`);
@@ -209,41 +210,12 @@ export default function CreateOrEditModal({
     setErrors({ ...errors, [name]: "" })
   }
 
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files || e.target.files.length === 0) return;
-
     const file = e.target.files[0];
-    let extension = file.type.split("/")[1] || "png";
-    extension = extension.replace("x-", "");
-    const filePath = `${userId}/${(formData as WorkType).id}/avatar.${extension}`;
-
-    // 1. Supabase Storage にアップロード
-    const { error } = await supabase.storage
-      .from("work-icon") // ← ストレージバケット名
-      .upload(filePath, file, {
-        upsert: true, // 上書き許可
-      });
-
-    if (error) {
-      console.error("画像のアップロードに失敗:", error.message);
-      return;
-    }
-
-    // 2. パブリックURLを取得
-    const { publicUrl } = supabase.storage
-      .from("work-icon")
-      .getPublicUrl(filePath).data;
-
-
-    if ("icon" in formData) {
-      setIconWithTimestamp(`${publicUrl}?t=${Date.now()}`);
-    }
-
-    // 3. URLをプロフィールのiconに設定（DB保存も可能）
-    setFormData((prev) => ({
-      ...prev,
-      icon: publicUrl,
-    }));
+    setSelectedFile(file);
+    // ローカルプレビュー用に URL を生成（メモリリーク防止のため後で revokeObjectURL するのが望ましい）
+    setIconWithTimestamp(URL.createObjectURL(file));
   };
 
   const handleLabelToggle = (labelId: number) => {
@@ -410,6 +382,45 @@ export default function CreateOrEditModal({
 
       const result = await res.json();
 
+      if (selectedFile) {
+        let extension = selectedFile.type.split("/")[1] || "png";
+        extension = extension.replace("x-", "");
+        // 編集の場合は formData.id でもOK、新規作成の場合は result.id を利用
+        const workId = data ? (formData as WorkType).id : result.id;
+        const ownerId = (formData as WorkType).authorIds[0]
+        const filePath = `${ownerId}/${workId}/avatar.${extension}`;
+
+        // 画像アップロード
+        const { error: uploadError } = await supabase.storage
+          .from("work-icon")
+          .upload(filePath, selectedFile, { upsert: true });
+        if (uploadError) {
+          console.error("画像のアップロードに失敗:", uploadError.message);
+        } else {
+          // パブリックURLの取得
+          const { publicUrl } = supabase.storage
+            .from("work-icon")
+            .getPublicUrl(filePath).data;
+          setIconWithTimestamp(`${publicUrl}?t=${Date.now()}`);
+          // フォームデータに URL を保存する（必要ならDB更新の API を呼ぶ）
+          setFormData((prev) => ({
+            ...prev,
+            icon: publicUrl,
+          }));
+
+          const updateRes = await fetch(`${endpoint}/${workId}`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ icon: publicUrl }),
+          });
+          if (!updateRes.ok) {
+            console.error("画像URL更新に失敗しました");
+          }
+        }
+      }
+
+      if (!res.ok) throw new Error(`${method} request failed`);
+
       toast({
         title: data ? "更新成功" : "作成成功",
         description: `${type === "article" ? "記事" : "作品"}が正常に${data ? "更新" : "作成"}されました。`,
@@ -432,7 +443,7 @@ export default function CreateOrEditModal({
     }
   };
 
-  const handleDelete = async (ownerId : string, deleteId: number) => {
+  const handleDelete = async (ownerId: string, deleteId: number) => {
     if (!data) return
 
     setIsDeleting(true)
@@ -558,7 +569,7 @@ export default function CreateOrEditModal({
                     name="icon"
                     type="file"
                     accept="image/*"
-                    onChange={handleImageUpload}
+                    onChange={handleImageChange}
                     className="hidden"
                   />
                   <Button variant="outline" onClick={() => document.getElementById("icon")?.click()}>
@@ -682,9 +693,9 @@ export default function CreateOrEditModal({
                   <AlertDialogAction
                     onClick={(e) => {
                       e.preventDefault() // デフォルトの閉じる動作を防止
-                      if(type==="article"){
+                      if (type === "article") {
                         handleDelete((formData as ArticleType).authorIds[0], (formData as WorkType).id)
-                      }else{
+                      } else {
                         handleDelete((formData as WorkType).authorIds[0], (formData as WorkType).id)
                       }
                     }}

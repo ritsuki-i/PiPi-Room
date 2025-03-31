@@ -51,7 +51,7 @@ export default function ProfilePage() {
     const filePath = `${userId}/avatar.${extension}`;
 
     // 1. Supabase Storage にアップロード
-    const { data, error } = await supabase.storage
+    const { error } = await supabase.storage
       .from("icons") // ← ストレージバケット名
       .upload(filePath, file, {
         upsert: true, // 上書き許可

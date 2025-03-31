@@ -251,7 +251,7 @@ export default function EditArticlePage() {
                                 {markdown ? (
                                     <ReactMarkdown
                                         components={{
-                                            img: ({ node, ...props }) => (
+                                            img: ({ ...props }) => (
                                                 <div className="flex justify-center my-4">
                                                     <img {...props} className="max-w-full h-auto" />
                                                 </div>

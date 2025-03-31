@@ -218,7 +218,7 @@ export default function CreateOrEditModal({
     const filePath = `${userId}/${(formData as WorkType).id}/avatar.${extension}`;
 
     // 1. Supabase Storage にアップロード
-    const { data, error } = await supabase.storage
+    const { error } = await supabase.storage
       .from("work-icon") // ← ストレージバケット名
       .upload(filePath, file, {
         upsert: true, // 上書き許可

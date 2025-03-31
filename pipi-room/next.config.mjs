@@ -11,6 +11,7 @@ const nextConfig = {
                 hostname: '**', // HTTP も許可（必要に応じて削除）
             },
         ],
+        domains: ['qbjopokpqxzwyiyezzbs.supabase.co'],
     },
 };
 

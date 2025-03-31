@@ -11,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { supabase } from "@/lib/supabase";
 
 interface Notification {
   message: string
@@ -33,22 +34,44 @@ export default function ProfilePage() {
     githubUrl: "",
   })
   const [notification, setNotification] = useState<Notification | null>(null)
+  const [userId, setUserId] = useState<string | null>(null);
+
+  const iconWithTimestamp = `${profile.icon}?t=${Date.now()}`;
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setProfile({ ...profile, [e.target.name]: e.target.value })
   }
 
-  const handleIconUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleIconUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files || e.target.files.length === 0) return;
+
     const file = e.target.files[0];
-    const reader = new FileReader();
+    let extension = file.type.split("/")[1] || "png";
+    extension = extension.replace("x-", "");
+    const filePath = `${userId}/avatar.${extension}`;
 
-    reader.onloadend = () => {
-      const base64Data = reader.result as string; // Base64 形式の画像データ
-      setProfile({ ...profile, icon: base64Data }); // プレビュー用に設定
-    };
+    // 1. Supabase Storage にアップロード
+    const { data, error } = await supabase.storage
+      .from("icons") // ← ストレージバケット名
+      .upload(filePath, file, {
+        upsert: true, // 上書き許可
+      });
 
-    reader.readAsDataURL(file); // Base64 に変換
+    if (error) {
+      console.error("画像のアップロードに失敗:", error.message);
+      return;
+    }
+
+    // 2. パブリックURLを取得
+    const { publicUrl } = supabase.storage
+      .from("icons")
+      .getPublicUrl(filePath).data;
+
+    // 3. URLをプロフィールのiconに設定（DB保存も可能）
+    setProfile((prev) => ({
+      ...prev,
+      icon: publicUrl,
+    }));
   };
 
   const handleIconReset = () => {
@@ -62,6 +85,8 @@ export default function ProfilePage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ...profile, userId: user?.id }),
       })
+      const userData = await response.json();
+      setUserId(userData.userId);
       if (response.ok) {
         setNotification({ message: "プロフィールが保存されました", type: "success" })
         setTimeout(() => {
@@ -81,13 +106,15 @@ export default function ProfilePage() {
   }
 
   useEffect(() => {
+    setUserId(user?.id ?? null);
+
     if (notification) {
       const timer = setTimeout(() => {
         setNotification(null)
       }, 3000)
       return () => clearTimeout(timer)
     }
-  }, [notification])
+  }, [notification, user])
 
   return (
     <div className="container mx-auto p-4">
@@ -106,7 +133,7 @@ export default function ProfilePage() {
         <CardContent className="space-y-6">
           <div className="flex flex-col items-center space-y-4">
             <Avatar className="w-32 h-32">
-              <AvatarImage src={profile.icon} alt="Profile" />
+              <AvatarImage src={iconWithTimestamp} alt="Profile" />
               <AvatarFallback>{profile.name.charAt(0)}</AvatarFallback>
             </Avatar>
             <div className="flex space-x-2">

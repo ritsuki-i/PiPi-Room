@@ -1,7 +1,7 @@
 // app/api/works/[id]/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
-import { works, userWorks, workLabels, workTechnologies } from "@/db/schema";
+import { users, works, userWorks, workLabels, workTechnologies } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
 import { getAuth } from "@clerk/nextjs/server";
 
@@ -18,7 +18,14 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     .from(userWorks)
     .where(and(eq(userWorks.userId, userId), eq(userWorks.workId, workId)));
 
-  if (link.length === 0) {
+  //アクセスしているユーザのロールを取得
+  const currentUser = await db
+    .select()
+    .from(users)
+    .where(eq(users.id, userId));
+  const userRole = currentUser[0]?.type ?? "general";
+
+  if (link.length === 0 && (userRole !== "admin" && userRole !== "manager")) {
     return new NextResponse("Forbidden", { status: 403 });
   }
 
@@ -90,7 +97,14 @@ export async function DELETE(req: NextRequest, { params }: { params: { id: strin
     .from(userWorks)
     .where(and(eq(userWorks.userId, userId), eq(userWorks.workId, workId))); // 修正
 
-  if (link.length === 0) {
+  //アクセスしているユーザのロールを取得
+  const currentUser = await db
+    .select()
+    .from(users)
+    .where(eq(users.id, userId));
+  const userRole = currentUser[0]?.type ?? "general";
+
+  if (link.length === 0 && (userRole !== "admin" && userRole !== "manager")) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 

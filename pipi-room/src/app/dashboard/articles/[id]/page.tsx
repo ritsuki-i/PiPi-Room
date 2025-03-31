@@ -24,7 +24,7 @@ export default function EditArticlePage() {
     const [mode, setMode] = useState<"write" | "preview">("write")
     const [imageMap, setImageMap] = useState<Record<string, { base64: string; file: File }>>({});
     const [uploadedUrls, setUploadedUrls] = useState<string[]>([]);
-    const [status, setStatus] = useState<"draft" | "public" | "private">("draft")
+    const [status, setStatus] = useState<"Preview" | "Public" | "Private">("Preview")
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [cursorPos, setCursorPos] = useState<{ start: number; end: number } | null>(null);
@@ -212,7 +212,7 @@ export default function EditArticlePage() {
                             </Button>
                             <input type="file" accept="image/*" ref={fileInputRef} onChange={handleImageInsert} className="hidden" />
 
-                            <Select value={status} onValueChange={(value) => setStatus(value as any)}>
+                            <Select value={status} onValueChange={(value) => setStatus(value as "Preview" | "Public" | "Private")}>
                                 <SelectTrigger className="w-[120px]">
                                     <SelectValue placeholder="ステータス" />
                                 </SelectTrigger>

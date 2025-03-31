@@ -250,7 +250,7 @@ export default function ArticleList() {
               <div className="prose dark:prose-invert max-w-none">
                 <ReactMarkdown
                   components={{
-                    img: ({ node, ...props }) => (
+                    img: ({ ...props }) => (
                       <div className="flex justify-center my-4">
                         <img {...props} className="max-w-full h-auto" />
                       </div>

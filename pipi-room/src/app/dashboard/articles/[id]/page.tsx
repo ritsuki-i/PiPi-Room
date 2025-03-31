@@ -80,7 +80,6 @@ export default function EditArticlePage() {
         });
 
         setMarkdownForPreview(newMarkdown);
-        console.log(newMarkdown)
     }, [mode, markdown, uploadedUrls, imageMap]);
 
     const insertAtCursor = (text: string) => {

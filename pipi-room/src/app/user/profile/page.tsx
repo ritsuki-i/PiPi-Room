@@ -124,8 +124,6 @@ export default function ProfilePage() {
     extension = extension.replace("x-", "");
     const filePath = `${userId}/avatar.${extension}`;
 
-    console.log(filePath)
-
     // 1. Supabase Storage にアップロード
     const { error } = await supabase.storage
       .from("icons") // ← ストレージバケット名

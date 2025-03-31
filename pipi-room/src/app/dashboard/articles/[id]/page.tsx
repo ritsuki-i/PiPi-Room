@@ -219,7 +219,7 @@ export default function EditArticlePage() {
                                 <SelectContent>
                                     <SelectItem value="Preview">下書き</SelectItem>
                                     <SelectItem value="Public">公開</SelectItem>
-                                    <SelectItem value="Private">限定公開</SelectItem>
+                                    <SelectItem value="Private">サークル内公開</SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>

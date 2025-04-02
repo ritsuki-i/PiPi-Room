@@ -129,8 +129,6 @@ export default function CreateOrEditModal({
       } as WorkType)),
   )
 
-  const [userId, setUserId] = useState(null);
-
   const [selectedLabelIds, setSelectedLabelIds] = useState<number[]>(data?.labelIds || [])
   const [newLabelName, setNewLabelName] = useState("")
   const [selectedTechnologieIds, setSelectedTechnologieIds] = useState<number[]>(data?.technologieIds || [])
@@ -150,7 +148,6 @@ export default function CreateOrEditModal({
         const res = await fetch("/api/user/check");
         const data = await res.json();
 
-        setUserId(data.userId);
         if (!data.exists) {
           // ✅ ユーザーが存在しない場合 `/user/createAccount` にリダイレクト
           router.push("/user/createAccount");

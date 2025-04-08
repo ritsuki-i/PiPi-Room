@@ -12,11 +12,13 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Skeleton } from "@/components/ui/skeleton"
+import Loading from "@/components/Loading"
+import { useResponsiveSize } from "@/hooks/useResponsiveSize"
 
 export default function DashboardPage() {
   const { user } = useUser()
   const router = useRouter()
+  const size = useResponsiveSize()
 
   const [allArticles, setAllArticles] = useState<ArticleType[]>([])
   const [allWorks, setAllWorks] = useState<WorkType[]>([])
@@ -119,36 +121,8 @@ export default function DashboardPage() {
   // Loading state
   if (loading) {
     return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="mb-6">
-          <Skeleton className="h-10 w-48 mb-6" />
-          <div className="space-y-2">
-            <Skeleton className="h-4 w-full" />
-            <Skeleton className="h-4 w-[80%]" />
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
-          {Array(4)
-            .fill(0)
-            .map((_, i) => (
-              <Card key={i} className="overflow-hidden">
-                <CardContent className="p-0">
-                  <div className="p-6">
-                    <Skeleton className="h-5 w-3/4 mb-4" />
-                    <div className="space-y-2">
-                      <Skeleton className="h-4 w-full" />
-                      <Skeleton className="h-4 w-5/6" />
-                      <Skeleton className="h-4 w-4/6" />
-                    </div>
-                  </div>
-                  <div className="bg-muted/30 p-4 flex justify-end">
-                    <Skeleton className="h-9 w-24" />
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-        </div>
+      <div className="w-[100%] h-screen flex items-start justify-center pt-32">
+        <Loading size={size} />
       </div>
     )
   }

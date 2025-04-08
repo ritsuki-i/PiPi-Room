@@ -139,7 +139,7 @@ export const workViewHistory = pgTable("work_view_history", {
 // 記事のコメント
 export const articleComments = pgTable("article_comments", {
   id: bigserial("id", { mode: "number" }).primaryKey(),
-  ararticleId: bigint("article_id", { mode: "number" })
+  articleId: bigint("article_id", { mode: "number" })
     .references(() => articles.id, { onDelete: "cascade" })
     .notNull(),
   userId: varchar("user_id", { length: 255 }).references(() => users.id, { onDelete: "cascade" }),

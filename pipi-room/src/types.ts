@@ -43,3 +43,19 @@ export type UserType = {
     githubUrl: string | null;
     type: string | null;
 };
+
+export type WorkCommentType = {
+    id: number
+    workId: number
+    userId: string
+    content: string
+    createdAt: string
+}
+
+export type ArticleCommentType = {
+    id: number
+    articleId: number
+    userId: string
+    content: string
+    createdAt: string
+}

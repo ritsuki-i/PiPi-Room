@@ -9,7 +9,6 @@ interface PiedPiperLoadingProps {
   className?: string
   text?: string
   textColor?: string
-  duration?: number
 }
 
 export default function PiedPiperLoading({
@@ -17,7 +16,6 @@ export default function PiedPiperLoading({
   className = "",
   text = "Loading...",
   textColor = "#5cb85c",
-  duration = 8,
 }: PiedPiperLoadingProps) {
   const [rotationAngle, setRotationAngle] = useState(0)
 

@@ -3,7 +3,7 @@
 import type React from "react"
 import { useUser } from "@clerk/nextjs"
 import { useState, useEffect } from "react"
-import { User, AtSign, FileText, Github, Upload, GraduationCap, Globe, Mail, Loader2 } from "lucide-react"
+import { User, AtSign, FileText, Github, Upload, GraduationCap, Globe, Mail } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -13,9 +13,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import Loading from "@/components/Loading"
+import { useResponsiveSize } from "@/hooks/useResponsiveSize"
+import { toast } from "@/hooks/use-toast"
 
 export default function ProfilePage() {
   const { user } = useUser();
+  const size = useResponsiveSize()
   const [userId, setUserId] = useState(null);
   const router = useRouter();
   const [loading, setLoading] = useState(true)
@@ -150,7 +154,11 @@ export default function ProfilePage() {
 
   const updateProfile = async () => {
     if (!user?.id) {
-      alert("ログイン情報がありません")
+      toast({
+        title: "エラーが発生しました",
+        description: "ログイン情報がありません。",
+        variant: "destructive",
+      })
       return
     }
 
@@ -162,25 +170,32 @@ export default function ProfilePage() {
       })
 
       if (res.ok) {
-        alert("プロフィールが更新されました")
+        toast({
+          title: "更新成功",
+          description: "プロフィールが更新されました。"
+        })
       } else {
-        alert("更新に失敗しました")
+        toast({
+          title: "エラーが発生しました",
+          description: "更新に失敗しました。",
+          variant: "destructive",
+        })
       }
     } catch (error) {
       console.error("エラーが発生しました:", error)
-      alert("エラーが発生しました")
+      toast({
+        title: "エラーが発生しました",
+        description: "更新に失敗しました。",
+        variant: "destructive",
+      })
     }
   }
 
   if (loading) {
     return (
-      <Card className="w-full max-w-md mx-auto mt-[50px] border-blue-200">
-        <CardContent className="pt-6 flex flex-col items-center gap-4">
-          <Loader2 className="h-12 w-12 text-blue-500 animate-spin" />
-          <h2 className="text-xl font-semibold text-center">データを取得中...</h2>
-          <p className="text-muted-foreground text-center">しばらくお待ちください</p>
-        </CardContent>
-      </Card>
+      <div className="w-[100%] h-screen flex items-start justify-center pt-32">
+        <Loading size={size} />
+      </div>
     )
   }
 

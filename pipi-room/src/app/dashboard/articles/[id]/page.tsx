@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, ChangeEvent, useRef } from "react"
-import { Loader2, ImageIcon, SaveIcon, EyeIcon, PencilIcon } from "lucide-react"
+import { ImageIcon, SaveIcon, EyeIcon, PencilIcon } from "lucide-react"
 import { useUser } from "@clerk/nextjs"
 import { useParams, useRouter } from "next/navigation"
 import { Textarea } from "@/components/ui/textarea"
@@ -11,6 +11,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import ReactMarkdown from "react-markdown"
 import { supabase } from "@/lib/supabase";
+import Loading from "@/components/Loading"
+import { useResponsiveSize } from "@/hooks/useResponsiveSize"
+import { toast } from "@/hooks/use-toast"
 
 export default function EditArticlePage() {
     const { user } = useUser();
@@ -19,6 +22,7 @@ export default function EditArticlePage() {
     const params = useParams()
     const router = useRouter()
     const articleId = params.id as string
+    const size = useResponsiveSize()
 
     const [markdown, setMarkdown] = useState("")
     const [mode, setMode] = useState<"write" | "preview">("write")
@@ -155,23 +159,19 @@ export default function EditArticlePage() {
         })
 
         if (res.ok) {
-            alert("保存しました")
+            toast({ title: "保存完了", description: `記事の保存が完了しました。` })
             router.push("/dashboard")
         } else {
-            alert("保存に失敗しました")
+            toast({ title: "保存失敗", description: `記事の保存が失敗しました。`, variant: "destructive"})
         }
     }
 
     // Loading state
     if (loading) {
         return (
-            <Card className="w-full max-w-md mx-auto mt-[50px] border-blue-200">
-                <CardContent className="pt-6 flex flex-col items-center gap-4">
-                    <Loader2 className="h-12 w-12 text-blue-500 animate-spin" />
-                    <h2 className="text-xl font-semibold text-center">データを取得中...</h2>
-                    <p className="text-muted-foreground text-center">しばらくお待ちください</p>
-                </CardContent>
-            </Card>
+            <div className="w-[100%] h-screen flex items-start justify-center pt-32">
+                <Loading size={size} />
+            </div>
         )
     }
 

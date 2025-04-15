@@ -1,15 +1,15 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { ChevronLeft, ChevronRight, X } from "lucide-react"
+import { useState, useEffect } from "react";
+import { ChevronLeft, ChevronRight, X } from "lucide-react";
 
 interface GuidePage {
-  title: string
-  content: JSX.Element | string
+  title: string;
+  content: JSX.Element | string;
 }
 
 interface GuidePopupProps {
-  onClose: () => void
+  onClose: () => void;
 }
 
 export function GuidePopup({ onClose }: GuidePopupProps) {
@@ -25,6 +25,18 @@ export function GuidePopup({ onClose }: GuidePopupProps) {
             誰がどんな作品を作ったかがひと目でわかり、コメント機能やシンプルなUIで、先輩からフィードバックをもらえます。
             <br />
             みんなで作品を通じたコミュニケーションを楽しみながら学べる環境を目指しています！
+          </p>
+        </div>
+      ),
+    },
+    {
+      title: "ログインについて",
+      content: (
+        <div>
+          <p>
+            ログインすると、コメントができるようになります。
+            <br />
+            さらに、サークルのメンバーとして認められると、作品や記事の投稿・編集が可能になります。
           </p>
         </div>
       ),
@@ -61,8 +73,7 @@ export function GuidePopup({ onClose }: GuidePopupProps) {
             <br />
             2. タイトルとカテゴリを入力し、次へ進むと記事編集ページが表示されます。
             <br />
-            3.
-            編集ページでは、マークダウン記法を使って記事を作成できます。書いた内容はプレビューで確認できます。（比較用の画像あり）
+            3. 編集ページでは、マークダウン記法を使って記事を作成できます。書いた内容はプレビューで確認できます。（比較用の画像あり）
           </p>
           <p>
             画像を記事に挿入するには、挿入したい場所にカーソルを合わせ、画像挿入ボタンをクリックしてください。
@@ -112,100 +123,104 @@ export function GuidePopup({ onClose }: GuidePopupProps) {
         </div>
       ),
     },
-  ]
+  ];
 
   // 現在のページインデックスを管理する state（2ページずつ表示するため、偶数ページから始める）
-  const [currentPage, setCurrentPage] = useState(0)
-  const [isFlipping, setIsFlipping] = useState(false)
-  const [flipDirection, setFlipDirection] = useState<"next" | "prev">("next")
-  const [isBookOpen, setIsBookOpen] = useState(false)
-  const [isMobile, setIsMobile] = useState(false)
+  const [currentPage, setCurrentPage] = useState(0);
+  const [isFlipping, setIsFlipping] = useState(false);
+//   const [flipDirection, setFlipDirection] = useState<"next" | "prev">("next"); ページめくりの際にどちらの方向（「次」か「前」）にアニメーションが動くか
+  const [isBookOpen, setIsBookOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
 
   // 画面サイズの検出
   useEffect(() => {
     const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768)
-    }
+      setIsMobile(window.innerWidth < 768);
+    };
 
-    checkMobile()
-    window.addEventListener("resize", checkMobile)
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
 
     return () => {
-      window.removeEventListener("resize", checkMobile)
-    }
-  }, [])
+      window.removeEventListener("resize", checkMobile);
+    };
+  }, []);
 
   // 本を開く効果
   useEffect(() => {
     setTimeout(() => {
-      setIsBookOpen(true)
-    }, 300)
-  }, [])
+      setIsBookOpen(true);
+    }, 300);
+  }, []);
 
   // 次のページへ（2ページずつ進む）
   const handleNext = () => {
     if (currentPage < pages.length - 2 && !isFlipping) {
-      setFlipDirection("next")
-      setIsFlipping(true)
+    //   setFlipDirection("next");
+      setIsFlipping(true);
 
       // ページめくりアニメーション用のクラスを追加
-      const bookContent = document.querySelector(".book-content")
+      const bookContent = document.querySelector(".book-content");
       if (bookContent) {
-        bookContent.classList.add("page-flip")
+        bookContent.classList.add("page-flip");
 
         setTimeout(() => {
-          bookContent.classList.remove("page-flip")
+          bookContent.classList.remove("page-flip");
           // 2ページずつ進める
-          setCurrentPage((prev) => Math.min(prev + 2, pages.length - (isMobile ? 1 : 2)))
-          setIsFlipping(false)
-        }, 500)
+          setCurrentPage((prev) =>
+            Math.min(prev + 2, pages.length - (isMobile ? 1 : 2))
+          );
+          setIsFlipping(false);
+        }, 500);
       } else {
         // DOM要素が見つからない場合はアニメーションなしで進める
         setTimeout(() => {
-          setCurrentPage((prev) => Math.min(prev + 2, pages.length - (isMobile ? 1 : 2)))
-          setIsFlipping(false)
-        }, 500)
+          setCurrentPage((prev) =>
+            Math.min(prev + 2, pages.length - (isMobile ? 1 : 2))
+          );
+          setIsFlipping(false);
+        }, 500);
       }
     }
-  }
+  };
 
   // 前のページへ（2ページずつ戻る）
   const handlePrev = () => {
     if (currentPage > 0 && !isFlipping) {
-      setFlipDirection("prev")
-      setIsFlipping(true)
+    //   setFlipDirection("prev");
+      setIsFlipping(true);
 
       // ページめくりアニメーション用のクラスを追加
-      const bookContent = document.querySelector(".book-content")
+      const bookContent = document.querySelector(".book-content");
       if (bookContent) {
-        bookContent.classList.add("page-flip-reverse")
+        bookContent.classList.add("page-flip-reverse");
 
         setTimeout(() => {
-          bookContent.classList.remove("page-flip-reverse")
+          bookContent.classList.remove("page-flip-reverse");
           // 2ページずつ戻る
-          setCurrentPage((prev) => Math.max(prev - 2, 0))
-          setIsFlipping(false)
-        }, 500)
+          setCurrentPage((prev) => Math.max(prev - 2, 0));
+          setIsFlipping(false);
+        }, 500);
       } else {
         // DOM要素が見つからない場合はアニメーションなしで戻る
         setTimeout(() => {
-          setCurrentPage((prev) => Math.max(prev - 2, 0))
-          setIsFlipping(false)
-        }, 500)
+          setCurrentPage((prev) => Math.max(prev - 2, 0));
+          setIsFlipping(false);
+        }, 500);
       }
     }
-  }
+  };
 
   const handleClose = () => {
-    setIsBookOpen(false)
+    setIsBookOpen(false);
     setTimeout(() => {
-      onClose()
-    }, 500)
-  }
+      onClose();
+    }, 500);
+  };
 
   // 現在のページと次のページのインデックスを計算
-  const leftPageIndex = currentPage
-  const rightPageIndex = currentPage + 1
+  const leftPageIndex = currentPage;
+  const rightPageIndex = currentPage + 1;
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-30 p-4 overflow-y-auto">
@@ -219,7 +234,7 @@ export function GuidePopup({ onClose }: GuidePopupProps) {
           overflowY: isMobile ? "auto" : "hidden",
         }}
       >
-        {/* 閉じるボタン - 常に表示されるように固定位置に */}
+        {/* 閉じるボタン */}
         <button
           onClick={handleClose}
           className="fixed top-3 right-4 p-2 text-black hover:text-gray-300 z-[100]"
@@ -264,7 +279,7 @@ export function GuidePopup({ onClose }: GuidePopupProps) {
               height: isMobile ? "auto" : "100%",
               display: "flex",
               flexDirection: isMobile ? "column" : "row",
-              maxHeight: isMobile ? "80vh" : "70vh", // モバイルでの最大高さを設定
+              maxHeight: isMobile ? "80vh" : "70vh",
             }}
           >
             {/* 左ページ */}
@@ -274,7 +289,7 @@ export function GuidePopup({ onClose }: GuidePopupProps) {
               }`}
               style={{
                 borderRight: isMobile ? "none" : "1px solid #e0e0e0",
-                maxHeight: isMobile ? "50vh" : "auto", // モバイルでの最大高さを制限
+                maxHeight: isMobile ? "50vh" : "auto",
               }}
             >
               {leftPageIndex < pages.length && (
@@ -282,7 +297,9 @@ export function GuidePopup({ onClose }: GuidePopupProps) {
                   <h2 className="text-xl font-bold mb-4 text-center text-green-800 border-b border-green-200 pb-2">
                     {pages[leftPageIndex].title}
                   </h2>
-                  <div className="flex-grow prose prose-sm max-w-none">{pages[leftPageIndex].content}</div>
+                  <div className="flex-grow prose prose-sm max-w-none">
+                    {pages[leftPageIndex].content}
+                  </div>
                 </div>
               )}
             </div>
@@ -293,7 +310,7 @@ export function GuidePopup({ onClose }: GuidePopupProps) {
                 isMobile ? "overflow-y-auto" : ""
               }`}
               style={{
-                maxHeight: isMobile ? "50vh" : "auto", // モバイルでの最大高さを制限
+                maxHeight: isMobile ? "50vh" : "auto",
               }}
             >
               {!isMobile && rightPageIndex < pages.length && (
@@ -301,7 +318,9 @@ export function GuidePopup({ onClose }: GuidePopupProps) {
                   <h2 className="text-xl font-bold mb-4 text-center text-green-800 border-b border-green-200 pb-2">
                     {pages[rightPageIndex].title}
                   </h2>
-                  <div className="flex-grow prose prose-sm max-w-none">{pages[rightPageIndex].content}</div>
+                  <div className="flex-grow prose prose-sm max-w-none">
+                    {pages[rightPageIndex].content}
+                  </div>
                 </div>
               )}
 
@@ -409,5 +428,5 @@ export function GuidePopup({ onClose }: GuidePopupProps) {
         }
       `}</style>
     </div>
-  )
+  );
 }

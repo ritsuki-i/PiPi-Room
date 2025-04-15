@@ -61,6 +61,7 @@ export function GuidePopup({ onClose }: GuidePopupProps) {
           <p>1. Dashboard → 新規作成 → 記事作成を選択</p>
           <p>2. タイトル・カテゴリ入力 → 編集画面へ</p>
           <p>3. Markdown記法で記述、画像挿入も可能</p>
+          <p>4. 公開設定より、メンバーのみまたは全体に公開するか選択(<span className="text-red-500">デフォルトは下書きなので設定しないと公開されない</span>)</p>
         </>
       ),
     },
@@ -79,16 +80,16 @@ export function GuidePopup({ onClose }: GuidePopupProps) {
       content: (
         <>
           <p>
-            <strong>admin:</strong> 全操作可能
+            <strong>admin:</strong> ユーザーの削除やロール変更、全操作可能
           </p>
           <p>
-            <strong>manager:</strong> 編集・削除可能
+            <strong>manager:</strong> すべての作品・記事の編集・削除
           </p>
           <p>
-            <strong>member:</strong> 投稿・閲覧可能
+            <strong>member:</strong> すべての作品・記事を閲覧、自分の作品・記事の投稿。(<span className="text-red-500">PiedPiperに所属している確認が必要</span>)
           </p>
           <p>
-            <strong>general:</strong> Public作品の閲覧・コメント
+            <strong>general:</strong> 一部の作品・記事の閲覧 (Public設定のみ)、コメントの投稿（作品の投稿は不可）
           </p>
         </>
       ),
@@ -97,9 +98,9 @@ export function GuidePopup({ onClose }: GuidePopupProps) {
       title: "PDF出力",
       content: (
         <p>
-          サークル幹部向けにPDF出力機能あり。
+          サークルの幹部向けに、作品や記事のデータをまとめてPDFで出力できる機能です。
           <br />
-          Works / Articles ページからダウンロード（予定）。
+          WorksページとArticlesページからダウンロードできます。（実装予定）
         </p>
       ),
     },

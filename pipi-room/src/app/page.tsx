@@ -6,7 +6,6 @@ import { useMediaQuery } from "@/hooks/use-media-query"
 import { useResponsiveSize } from "@/hooks/useResponsiveSize"
 import Loading from "@/components/Loading"
 import { OpenRoom } from "@/components/OpenRoom"
-import Head from 'next/head';
 
 export default function Home() {
   const [current, setCurrent] = useState(0)

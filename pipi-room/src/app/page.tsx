@@ -172,13 +172,6 @@ export default function Home() {
 
   return (
     <>
-      <Head>
-        <title>PiPi Room</title>
-        <meta property="og:title" content="PiPi Room" />
-        <meta property="og:description" content="ユーザが作品や記事を投稿し、管理できるプラットフォーム" />
-        <meta property="og:image" content="https://pi-pi-room.vercel.app/_next/image?url=%2Fimages%2FPiedPiperlogo.png&w=48&q=75" />
-        <meta property="og:url" content="https://pi-pi-room.vercel.app/" />
-      </Head>
       <div
         ref={containerRef}
         className="fixed top-[60px] left-0 right-0 bottom-0 w-screen bg-[#fffaf0] overflow-hidden"

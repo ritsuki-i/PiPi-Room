@@ -19,7 +19,29 @@ const geistMono = localFont({
 
 export const metadata: Metadata = {
   title: "PiPi Room",
-  description: "Archive of works created by PiedPiper",
+  description: "ユーザが作品や記事を投稿し、管理できるプラットフォーム",
+  openGraph: {
+    title: "PiPi Room",
+    description: "ユーザが作品や記事を投稿し、管理できるプラットフォーム",
+    url: "https://pi-pi-room.vercel.app/",
+    type: "website",
+    siteName: "PiPi Room",
+    locale: "ja_JP",
+    images: [
+      {
+        url: "/images/roomBackground.png",
+        width: 1200,
+        height: 630,
+        alt: "PiPi Room のプレビュー画像",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    // site や creator は必要に応じて
+    // site: "@YourTwitterAccount",
+    // creator: "@YourTwitterAccount",
+  },
 };
 
 export default function RootLayout({

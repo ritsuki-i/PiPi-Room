@@ -18,6 +18,7 @@ const geistMono = localFont({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL('https://pi-pi-room.vercel.app/'), 
   title: "PiPi Room",
   description: "ユーザが作品や記事を投稿し、管理できるプラットフォーム",
   openGraph: {

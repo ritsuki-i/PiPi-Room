@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useMemo } from "react"
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from "@/components/ui/button"
 import Loading from "@/components/Loading"
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
@@ -47,6 +48,15 @@ import { useResponsiveSize } from "@/hooks/useResponsiveSize"
 type SortOptionType = "nameAsc" | "nameDesc" | "dateAsc" | "dateDesc"
 
 export default function WorkList() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  const initialLabelIds = searchParams.get('labels')?.split(',').map(Number).filter(id => !isNaN(id)) || [];
+  const initialTechIds = searchParams.get('techs')?.split(',').map(Number).filter(id => !isNaN(id)) || [];
+  const initialSort = searchParams.get('sort') as SortOptionType || 'dateDesc';
+  const initialSearch = searchParams.get('q') || '';
+  const initialTab = searchParams.get('tab') || 'all';
+
   const [works, setWorks] = useState<WorkType[]>([])
   const [users, setUsers] = useState<{ [key: string]: UserType }>({})
   const [labels, setLabels] = useState<{ [key: number]: LabelType }>({})
@@ -66,12 +76,12 @@ export default function WorkList() {
   const [editingCommentContent, setEditingCommentContent] = useState("")
   const [currentUserId, setCurrentUserId] = useState<string | null>("") // Example
 
-  // Filtering and sorting states
-  const [searchKeyword, setSearchKeyword] = useState("")
-  const [selectedLabelIds, setSelectedLabelIds] = useState<number[]>([])
-  const [selectedTechnologyIds, setSelectedTechnologyIds] = useState<number[]>([])
-  const [sortOption, setSortOption] = useState<SortOptionType>("dateDesc")
-  const [activeTab, setActiveTab] = useState("all")
+  // Filtering and sorting states(初期値で更新)
+  const [selectedLabelIds, setSelectedLabelIds] = useState<number[]>(initialLabelIds);
+  const [selectedTechnologyIds, setSelectedTechnologyIds] = useState<number[]>(initialTechIds);
+  const [sortOption, setSortOption] = useState<SortOptionType>(initialSort);
+  const [searchKeyword, setSearchKeyword] = useState(initialSearch);
+  const [activeTab, setActiveTab] = useState(initialTab);
 
   const size = useResponsiveSize()
 
@@ -160,6 +170,35 @@ export default function WorkList() {
       fetchData()
     }
   }, [userRole])
+
+  // フィルター状態が変更されたらURLを更新するuseEffect
+  useEffect(() => {
+    const params = new URLSearchParams();
+
+    if (selectedLabelIds.length > 0) {
+      params.set('labels', selectedLabelIds.join(','));
+    }
+    if (selectedTechnologyIds.length > 0) {
+      params.set('techs', selectedTechnologyIds.join(','));
+    }
+    if (sortOption !== 'dateDesc') { // デフォルト値以外ならセット
+      params.set('sort', sortOption);
+    }
+    if (searchKeyword) {
+      params.set('q', searchKeyword);
+    }
+     if (activeTab !== 'all') { // デフォルト値以外ならセット
+      params.set('tab', activeTab);
+    }
+
+    // クエリパラメータ文字列を生成 (?を含まない)
+    const queryString = params.toString();
+
+    // router.replaceでURLを更新 (履歴に残さない)
+    // 現在のパス (`/works`) + 新しいクエリ文字列
+    router.replace(`/works${queryString ? `?${queryString}` : ''}`, { scroll: false });
+
+  }, [selectedLabelIds, selectedTechnologyIds, sortOption, searchKeyword, activeTab, router]);
 
   // Toggle label selection
   const toggleLabel = (labelId: number) => {

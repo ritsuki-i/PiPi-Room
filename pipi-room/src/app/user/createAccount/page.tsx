@@ -120,7 +120,7 @@ export default function ProfilePage() {
     <div className="container mx-auto p-4">
       {notification && (
         <div
-          className={`fixed top-4 right-4 p-4 rounded-md ${notification.type === "success" ? "bg-green-500" : "bg-red-500"
+          className={`fixed top-4 right-4 p-4 rounded-md z-20 ${notification.type === "success" ? "bg-green-500" : "bg-red-500"
             } text-white`}
         >
           {notification.message}

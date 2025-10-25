@@ -24,7 +24,7 @@ export default function Header() {
     ]
 
     return (
-        <div className="border-b sticky top-0 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="border-b sticky top-0 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60  z-10">
             <header className="container mx-auto px-4 py-3 flex items-center justify-between">
                 <div className="flex items-center gap-x-2 md:gap-x-3">
                     <Image

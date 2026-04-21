@@ -1,6 +1,8 @@
-# PiPi Room
+﻿# PiPi Room
 
 PiPi Room は、作品や記事の公開だけでなく、運用面まで含めて設計した投稿プラットフォームです。特に、**非開発者でも継続運用できる管理設計**、**記事共有のための Markdown 編集体験**、**使いやすい UI** に注力しました。
+
+作品URL：https://pi-pi-room.vercel.app/
 
 ---
 

@@ -51,7 +51,9 @@ Pied Piper青山テック愛好会（現 Digitart テクノロジー愛好会）
 
 Article ページでは、Markdown を使って記事を書き、そのままサイト上で共有できます。画像挿入時には仮 URL を用いた一時保存を行うことで、ブラウザ上でプレビューを確認しながら執筆を進められるようにしています。
 
-![Article ページのイメージ](./pipi-room/public/images/article.png)
+| 編集画面 | プレビュー画面 |
+| --- | --- |
+| <img src="./pipi-room/public/images/edit.png" alt="編集画面" width="420" /> | <img src="./pipi-room/public/images/preview.png" alt="プレビュー画面" width="420" /> |
 ---
 
 ## 機能
